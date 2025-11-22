@@ -1,0 +1,41 @@
+---
+description: Language and encoding requirements for internationalization
+alwaysApply: true
+---
+
+# Internationalization Rules
+
+## Language Requirements
+
+- **Primary Language**: All code, comments, documentation, and user-facing messages MUST be in English
+- **Code Comments**: Use clear, descriptive English comments
+- **Variable/Function Names**: Use English words only (snake_case for Python)
+- **Error Messages**: All error messages and logs in English
+- **Documentation**: README, docstrings, and inline documentation in English
+
+## Content Processing
+
+- Support multi-language content collection (RSS feeds in any language)
+- LLM processing should handle content in multiple languages
+- Translation features should support common language pairs (EN ↔ ZH, EN ↔ JP, etc.)
+
+## File Encoding
+
+- All source files MUST use UTF-8 encoding
+- Ensure proper encoding declaration in Python files: `# -*- coding: utf-8 -*-`
+
+## Examples
+
+✅ **Good - English identifiers for internationalization**:
+```python
+def fetch_rss_feed(url: str) -> list[dict]:
+    """Fetch and parse RSS feed from given URL.
+    
+    Args:
+        url: RSS feed URL
+        
+    Returns:
+        List of feed entries with title, link, and summary
+    """
+    pass
+```

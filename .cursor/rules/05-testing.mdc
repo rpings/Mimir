@@ -1,0 +1,68 @@
+---
+description: Testing standards, pytest usage, and coverage requirements
+globs: ["**/test_*.py", "**/*_test.py", "tests/**"]
+---
+
+# Testing Rules
+
+## Test Structure
+
+- Mirror source structure: `tests/test_collectors.py` for `src/collectors/`
+- Use `pytest` framework
+- Test files: `test_*.py` or `*_test.py`
+- Test functions: `test_*`
+
+## Test Coverage
+
+- **Minimum**: 80% code coverage for core modules
+- **Critical paths**: 100% coverage (collectors, processors, storages)
+- Test both success and failure cases
+
+## Test Organization
+
+- **Unit tests**: Test individual functions/classes in isolation
+- **Integration tests**: Test module interactions
+- **Fixtures**: Use pytest fixtures for common test data
+
+## Examples
+
+✅ **Good**:
+```python
+import pytest
+from src.collectors.rss_collector import RSSCollector
+from src.utils.config_loader import Config
+
+@pytest.fixture
+def sample_config():
+    return Config({
+        'timezone': 'Asia/Shanghai',
+        'cache': {'enabled': True}
+    })
+
+def test_rss_collector_fetch_success(sample_config):
+    """Test successful RSS feed fetch."""
+    collector = RSSCollector(sample_config)
+    result = collector.collect()
+    assert isinstance(result, list)
+    assert len(result) > 0
+
+def test_rss_collector_invalid_url(sample_config):
+    """Test handling of invalid RSS URL."""
+    collector = RSSCollector(sample_config)
+    with pytest.raises(ValueError):
+        collector.collect()
+```
+
+❌ **Bad**:
+```python
+def test1():  # Unclear test name
+    c = RSSCollector()  # No setup, no assertions
+    c.collect()
+```
+
+## Mocking
+
+- Mock external API calls (Notion, LLM APIs)
+- Use `unittest.mock` or `pytest-mock`
+- Don't make real API calls in unit tests
+

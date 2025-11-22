@@ -1,0 +1,57 @@
+---
+description: Git commit conventions, branch strategy, and workflow guidelines
+alwaysApply: true
+---
+
+# Git Workflow Rules
+
+## Commit Messages
+
+- Follow **Conventional Commits** specification
+- Format: `<type>[optional scope]: <description>`
+- Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `perf`, `ci`, `build`
+- Optional scope: `feat(collector):`, `fix(notion):`, etc.
+- Description in English, imperative mood ("add feature" not "added feature")
+- Keep first line under 72 characters
+- Optional body and footer for detailed explanation and breaking changes
+
+## Branch Strategy
+
+- `main`: Stable, production-ready code
+- `feature/*`: New features (e.g., `feature/llm-processor`)
+- `fix/*`: Bug fixes (e.g., `fix/rss-parser-error`)
+- `docs/*`: Documentation updates
+
+## Commit Guidelines
+
+- **Commit frequently**: Commit after each meaningful change to enable easy rollback
+- Small, focused commits (one logical change per commit)
+- Each commit should represent a working state (code compiles, tests pass if applicable)
+- Update documentation with code changes in the same commit
+- Frequent commits create a detailed history for easier debugging and rollback
+
+## Examples
+
+✅ **Good Commit Messages**:
+```
+feat(collector): add RSS collector with URL deduplication
+fix(parser): handle RSS feed parsing errors gracefully
+docs: update README with Phase 1 MVP instructions
+refactor(processor): extract LLM cost tracking to separate module
+feat!: change API to use async/await (BREAKING CHANGE)
+```
+
+❌ **Bad**:
+```
+update code
+fix bug
+changes
+```
+
+## Pull Request Requirements
+
+- Clear description of changes
+- Reference related issues
+- Ensure all tests pass
+- Update documentation if needed
+

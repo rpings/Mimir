@@ -1,0 +1,69 @@
+---
+description: Module structure, design principles, and architecture patterns
+alwaysApply: true
+---
+
+# Architecture Rules
+
+## Module Structure
+
+- **Collectors**: Data collection from external sources (RSS, YouTube, Twitter)
+- **Processors**: Content processing (keyword classification, LLM processing)
+- **Storages**: Data persistence (Notion, cache)
+- **Utils**: Shared utilities (config, logging, retry)
+
+## Design Principles
+
+### 1. Interface-Based Design
+- Define abstract base classes for extensibility
+- All collectors inherit from `BaseCollector`
+- All processors inherit from `BaseProcessor`
+- All storages inherit from `BaseStorage`
+
+### 2. Dependency Injection
+- Pass dependencies through constructors, not global state
+- Use configuration objects, not global config access
+
+### 3. Error Handling
+- Fail gracefully: one source failure shouldn't break others
+- Use specific exception types, not bare `Exception`
+- Log errors with context
+
+## Phase-Based Development
+
+- **Phase 1 (MVP)**: No LLM dependencies, keyword-based classification
+- **Phase 2 (LLM)**: Optional LLM features, must have fallback to Phase 1
+- **Phase 3 (Optimization)**: Performance and scalability improvements
+
+## Examples
+
+✅ **Good - Interface-Based**:
+```python
+from abc import ABC, abstractmethod
+
+class BaseCollector(ABC):
+    @abstractmethod
+    def collect(self) -> list[dict[str, str]]:
+        """Collect data from source."""
+        pass
+
+class RSSCollector(BaseCollector):
+    def __init__(self, config: Config, logger: Logger):
+        self.config = config
+        self.logger = logger
+    
+    def collect(self) -> list[dict[str, str]]:
+        # Implementation
+        pass
+```
+
+❌ **Bad - Tight Coupling**:
+```python
+import config  # Global import
+
+class RSSCollector:
+    def collect(self):
+        url = config.RSS_URL  # Direct global access
+        # No dependency injection
+```
+

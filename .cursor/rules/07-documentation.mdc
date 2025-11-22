@@ -1,0 +1,72 @@
+---
+description: Documentation standards, docstring format, and README requirements
+alwaysApply: true
+---
+
+# Documentation Rules
+
+## Docstring Format
+
+- Use **Google-style** docstrings
+- All public functions and classes MUST have docstrings
+- Include: description, Args, Returns, Raises sections
+
+## README Requirements
+
+- Project overview and purpose
+- Installation instructions
+- Configuration setup
+- Usage examples
+- Phase-based feature list
+- Cost considerations (LLM usage)
+
+## Code Comments
+
+- **Why, not what**: Explain reasoning, not obvious code
+- Use comments for complex logic or non-obvious decisions
+- Keep comments up-to-date with code changes
+
+## Examples
+
+✅ **Good Docstring**:
+```python
+def label_topics(title: str, summary: str, rules: dict) -> list[str]:
+    """Label topics for content based on keyword rules.
+    
+    Analyzes title and summary text against predefined topic keywords
+    to assign relevant topic tags. Uses case-insensitive matching.
+    
+    Args:
+        title: Article title text
+        summary: Article summary/description text
+        rules: Dictionary mapping topic names to keyword lists
+        
+    Returns:
+        List of topic names that match the content (sorted, unique)
+        
+    Raises:
+        ValueError: If title and summary are both empty
+        
+    Example:
+        >>> rules = {'AI': ['artificial intelligence', 'machine learning']}
+        >>> label_topics('New AI Breakthrough', 'Machine learning advances', rules)
+        ['AI']
+    """
+    if not title and not summary:
+        raise ValueError("Title and summary cannot both be empty")
+    # ... implementation
+```
+
+❌ **Bad**:
+```python
+def label_topics(title, summary, rules):
+    # Labels topics  # Too vague, no docstring
+    pass
+```
+
+## Type Hints as Documentation
+
+- Type hints serve as inline documentation
+- Use descriptive variable names that document intent
+- Prefer type hints over comments for type information
+

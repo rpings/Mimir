@@ -1,0 +1,70 @@
+---
+description: Exception handling strategies, retry logic, and error recovery
+alwaysApply: true
+---
+
+# Error Handling Rules
+
+## Exception Strategy
+
+- **Use specific exceptions**: `ValueError`, `ConnectionError`, `TimeoutError`
+- **Never use bare `except:`** - always catch specific exceptions
+- **Log before raising**: Provide context in logs
+- **Fail gracefully**: Single source failure shouldn't crash entire process
+
+## Retry Logic
+
+- Use `tenacity` library for retry decorators
+- Exponential backoff for API rate limits
+- Maximum 3 retry attempts by default
+- Log retry attempts
+
+## Error Context
+
+- Include relevant context in error messages
+- Log stack traces for unexpected errors
+- Return meaningful error messages to caller
+
+## Examples
+
+✅ **Good**:
+```python
+from tenacity import retry, stop_after_attempt, wait_exponential
+import logging
+
+logger = logging.getLogger(__name__)
+
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=10)
+)
+def fetch_rss_feed(url: str) -> feedparser.FeedParserDict:
+    """Fetch RSS feed with retry logic."""
+    try:
+        feed = feedparser.parse(url)
+        if feed.bozo:
+            raise ValueError(f"Invalid RSS feed: {feed.bozo_exception}")
+        return feed
+    except (ConnectionError, TimeoutError) as e:
+        logger.error(f"Failed to fetch RSS feed {url}: {e}")
+        raise
+    except Exception as e:
+        logger.exception(f"Unexpected error fetching {url}")
+        raise ValueError(f"Failed to parse RSS feed: {e}") from e
+```
+
+❌ **Bad**:
+```python
+def fetch_rss_feed(url: str):
+    try:
+        return feedparser.parse(url)  # No error handling
+    except:  # Bare except, catches everything
+        pass  # Silent failure
+```
+
+## Error Recovery
+
+- **Collectors**: Log error, continue with next source
+- **Processors**: Fallback to simpler processing (LLM → keyword)
+- **Storages**: Retry with exponential backoff, log failures
+

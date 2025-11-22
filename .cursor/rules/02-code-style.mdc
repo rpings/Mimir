@@ -1,0 +1,92 @@
+---
+description: Python code style guide, type hints, and formatting standards
+alwaysApply: true
+---
+
+# Code Style Rules
+
+## Python Style Guide
+
+- Follow **PEP 8** style guide strictly
+- Use **snake_case** for functions, variables, and module names
+- Use **PascalCase** for class names
+- Use **UPPER_SNAKE_CASE** for constants
+- Maximum line length: **88 characters** (Black formatter default)
+
+## Type Hints
+
+- **Required**: All function signatures MUST include type hints
+- **Prefer built-in generics** (Python 3.9+): Use `list[dict[str, str]]` instead of `List[Dict[str, str]]`
+- Use `typing` module only for complex types: `Optional`, `Union`, `Callable`, `TypeVar`
+- Return type annotations are mandatory
+- Use `from __future__ import annotations` for forward references if needed
+
+## Code Organization
+
+- One class per file (unless closely related)
+- Functions should be focused and do one thing (Single Responsibility)
+- Maximum function length: 50 lines (extract helpers if longer)
+
+## Examples
+
+✅ **Good**:
+```python
+from typing import Optional
+from datetime import datetime
+
+def process_feed_entry(
+    entry: dict[str, str],
+    source_type: str,
+    enable_llm: bool = False
+) -> Optional[dict[str, str]]:
+    """Process a single RSS feed entry.
+    
+    Args:
+        entry: Raw feed entry dictionary
+        source_type: Type of source (e.g., 'blog', 'paper')
+        enable_llm: Whether to use LLM processing
+        
+    Returns:
+        Processed entry dictionary or None if invalid
+    """
+    if not entry.get('link'):
+        return None
+    # ... processing logic
+    return processed_entry
+```
+
+❌ **Bad**:
+```python
+def process(e, t, llm=False):  # No type hints, unclear names
+    # Missing docstring
+    if not e.get('link'):  # Unclear variable names
+        return None
+```
+
+## Imports
+
+- Use absolute imports
+- Group imports: stdlib → third-party → local
+- One import per line for readability
+
+```python
+# Standard library
+import os
+from datetime import datetime
+from typing import Optional
+
+# Third-party
+import feedparser
+from notion_client import Client
+
+# Local
+from src.collectors.rss_collector import RSSCollector
+```
+
+## Code Formatting Tools
+
+- Use **Black** for code formatting (line length: 88)
+- Use **isort** for import sorting
+- Use **ruff** for linting (faster alternative to pylint/flake8)
+- Use **mypy** for type checking
+- Configure tools via `pyproject.toml` (preferred) or separate config files

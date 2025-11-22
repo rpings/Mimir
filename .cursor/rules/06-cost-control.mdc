@@ -1,0 +1,68 @@
+---
+description: LLM API cost management, budget limits, and monitoring
+globs: ["**/processors/llm_*.py", "**/llm_*.py", "configs/**"]
+---
+
+# Cost Control Rules
+
+## LLM API Usage
+
+- **Default**: LLM features are **disabled by default** (`enable_llm: false`)
+- **Budget limits**: Set `monthly_budget` and `daily_limit` in config
+- **Cost tracking**: Log all LLM API calls with token usage
+- **Fallback**: Always have non-LLM fallback (keyword classification)
+
+## Configuration
+
+- LLM configuration in `configs/config.yml`:
+  ```yaml
+  llm:
+    enabled: false  # Must be explicitly enabled
+    daily_limit: 100
+    monthly_budget: 50  # USD
+  ```
+
+## Implementation Requirements
+
+- Check budget before making LLM API calls
+- Raise exception if budget exceeded
+- Log cost per operation
+- Cache LLM results when possible (same content = same result)
+
+## Examples
+
+✅ **Good**:
+```python
+class LLMProcessor:
+    def __init__(self, config: Config, cost_tracker: CostTracker):
+        self.config = config
+        self.cost_tracker = cost_tracker
+        self.enabled = config.get('llm.enabled', False)
+    
+    def generate_summary(self, content: str) -> str:
+        if not self.enabled:
+            raise ValueError("LLM processing is disabled")
+        
+        # Check budget
+        if self.cost_tracker.exceeds_daily_limit():
+            raise BudgetExceededError("Daily LLM budget exceeded")
+        
+        # Make API call and track cost
+        result = self._call_llm_api(content)
+        self.cost_tracker.record_call(tokens=result.tokens, cost=result.cost)
+        return result.summary
+```
+
+❌ **Bad**:
+```python
+def generate_summary(content: str) -> str:
+    # No budget check, no cost tracking
+    return openai.ChatCompletion.create(...)  # Uncontrolled API calls
+```
+
+## Monitoring
+
+- Log cost per day/week/month
+- Alert when approaching budget limits
+- Track cost per source/operation type
+
