@@ -10,6 +10,7 @@ tenacity>=8.2.0
 # Testing dependencies
 pytest>=7.4.0
 pytest-mock>=3.11.0
+pytest-cov>=4.1.0
 
 # Phase 2 (LLM Enhancement) - Optional
 # Uncomment when enabling LLM features

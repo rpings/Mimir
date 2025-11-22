@@ -3,6 +3,7 @@
 
 import pytest
 from unittest.mock import Mock, patch
+from datetime import datetime
 
 from src.collectors.rss_collector import RSSCollector
 
@@ -59,3 +60,109 @@ def test_rss_collector_missing_url():
     with pytest.raises(ValueError, match="Feed URL is required"):
         collector.collect()
 
+
+def test_rss_collector_bozo_warning(sample_feed_config):
+    """Test RSS collector handles parsing warnings."""
+    with patch("src.collectors.rss_collector.feedparser") as mock:
+        mock_feed = Mock()
+        mock_feed.bozo = True
+        mock_feed.bozo_exception = "Parse error"
+        mock_feed.entries = [
+            {
+                "title": "Test",
+                "link": "https://example.com",
+                "summary": "Test",
+            }
+        ]
+        mock.parse.return_value = mock_feed
+
+        collector = RSSCollector(feed_config=sample_feed_config)
+        entries = collector.collect()
+        assert len(entries) > 0  # Should still process entries
+
+
+def test_rss_collector_empty_entries(sample_feed_config):
+    """Test RSS collector with empty feed."""
+    with patch("src.collectors.rss_collector.feedparser") as mock:
+        mock_feed = Mock()
+        mock_feed.bozo = False
+        mock_feed.entries = []
+        mock.parse.return_value = mock_feed
+
+        collector = RSSCollector(feed_config=sample_feed_config)
+        entries = collector.collect()
+        assert entries == []
+
+
+def test_rss_collector_entry_without_link(sample_feed_config):
+    """Test RSS collector skips entries without link."""
+    with patch("src.collectors.rss_collector.feedparser") as mock:
+        mock_feed = Mock()
+        mock_feed.bozo = False
+        mock_feed.entries = [
+            {"title": "No Link", "summary": "Test"},
+            {
+                "title": "With Link",
+                "link": "https://example.com",
+                "summary": "Test",
+            },
+        ]
+        mock.parse.return_value = mock_feed
+
+        collector = RSSCollector(feed_config=sample_feed_config)
+        entries = collector.collect()
+        assert len(entries) == 1
+        assert entries[0]["link"] == "https://example.com"
+
+
+def test_rss_collector_date_parsing(sample_feed_config):
+    """Test RSS collector date parsing."""
+    with patch("src.collectors.rss_collector.feedparser") as mock:
+        from time import struct_time
+        mock_feed = Mock()
+        mock_feed.bozo = False
+        entry = Mock()
+        entry.get = Mock(side_effect=lambda k, d=None: {
+            "title": "Test",
+            "link": "https://example.com",
+            "summary": "Test",
+            "published": "2024-01-01T00:00:00Z",
+        }.get(k, d))
+        entry.published_parsed = struct_time((2024, 1, 1, 0, 0, 0, 0, 1, 0))
+        mock_feed.entries = [entry]
+        mock.parse.return_value = mock_feed
+
+        collector = RSSCollector(feed_config=sample_feed_config)
+        entries = collector.collect()
+        assert len(entries) > 0
+        assert "published" in entries[0]
+
+
+def test_rss_collector_max_entries(sample_feed_config):
+    """Test RSS collector respects max_entries limit."""
+    with patch("src.collectors.rss_collector.feedparser") as mock:
+        mock_feed = Mock()
+        mock_feed.bozo = False
+        mock_feed.entries = [
+            {
+                "title": f"Article {i}",
+                "link": f"https://example.com/{i}",
+                "summary": "Test",
+            }
+            for i in range(50)
+        ]
+        mock.parse.return_value = mock_feed
+
+        collector = RSSCollector(feed_config=sample_feed_config, max_entries=10)
+        entries = collector.collect()
+        assert len(entries) == 10
+
+
+def test_rss_collector_connection_error(sample_feed_config):
+    """Test RSS collector handles connection errors."""
+    with patch("src.collectors.rss_collector.feedparser") as mock:
+        mock.parse.side_effect = ConnectionError("Connection failed")
+
+        collector = RSSCollector(feed_config=sample_feed_config)
+        with pytest.raises(ValueError, match="Failed to parse RSS feed"):
+            collector.collect()

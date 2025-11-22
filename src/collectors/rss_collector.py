@@ -96,8 +96,8 @@ class RSSCollector(BaseCollector):
         if published and hasattr(entry, "published_parsed") and entry.published_parsed:
             try:
                 from time import mktime
-                from datetime import datetime
-                published = datetime.fromtimestamp(mktime(entry.published_parsed)).isoformat()
+                parsed_dt = datetime.fromtimestamp(mktime(entry.published_parsed))
+                published = parsed_dt.isoformat()
             except (ValueError, OSError, OverflowError):
                 published = datetime.now().isoformat()
         elif not published:
