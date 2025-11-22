@@ -1,0 +1,18 @@
+# Phase 1 (MVP) - Required dependencies
+notion-client>=2.2.1
+feedparser>=6.0.11
+PyYAML>=6.0.2
+httpx>=0.27.2
+pytz>=2024.1
+python-dateutil>=2.9.0
+tenacity>=8.2.0
+
+# Testing dependencies
+pytest>=7.4.0
+pytest-mock>=3.11.0
+
+# Phase 2 (LLM Enhancement) - Optional
+# Uncomment when enabling LLM features
+# openai>=1.0.0
+# anthropic>=0.18.0
+

@@ -1,0 +1,27 @@
+# Mimir Main Configuration
+
+# Timezone for date/time operations
+timezone: Asia/Shanghai
+
+# Notion integration settings
+notion:
+  database_id: ${NOTION_DATABASE_ID}  # From environment variable
+
+# Content processing settings
+processing:
+  enable_llm: false  # Phase 1: false, Phase 2: optional
+  enable_keyword_classification: true  # Phase 1: use keyword-based classification
+  deduplication:
+    method: url  # url, semantic, both
+
+# Cache settings
+cache:
+  enabled: true
+  path: ./data/cache
+  ttl_days: 30
+
+# Retry settings
+retry:
+  max_attempts: 3
+  backoff_factor: 2
+

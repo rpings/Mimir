@@ -1,0 +1,30 @@
+name: AI Intel Daily
+
+on:
+  schedule:
+    - cron: '10 1 * * *'  # UTC 01:10 = Asia/Shanghai 09:10
+  workflow_dispatch: {}  # Allow manual trigger
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Mimir
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+        run: python main.py
+

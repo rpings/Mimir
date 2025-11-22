@@ -1,0 +1,19 @@
+# Classification Rules Configuration
+
+# Topic keywords for content classification
+topics:
+  Agent: ["agent ", "react ", "toolformer", "autogen", "tool use", "langgraph"]
+  RAG: [" rag ", "retrieval", "vector", "embedding", "rerank", "faiss", "colbert", "dspy "]
+  多模态: ["multimodal", "vision", "vlm", "video", "image"]
+  蒸馏与量化: ["distill", "quantization", "gguf", "awq", "gptq"]
+  推理与系统: ["inference", "throughput", "latency", "vllm", "tgi", "tensorrt", "onnx"]
+  评测与基准: ["benchmark", "leaderboard", "mmlu", "gsm8k", "mteb", "eval"]
+  工具与框架: ["langchain", "llamaindex", "dspy", "ray", "pytorch", "jax"]
+  产业与政策: ["policy", "regulation", "finance", "funding", "acquire"]
+
+# Priority keywords for content prioritization
+priority:
+  High: ["state of the art", "sota", "release", "breaking", "major", "1.0", "general availability", "arxiv:2025"]
+  Medium: ["proposal", "beta", "preview", "tutorial", "guide"]
+  Low: []  # Default priority if no keywords match
+

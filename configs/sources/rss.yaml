@@ -1,0 +1,82 @@
+# RSS Feed Sources Configuration
+
+feeds:
+  # Academic / Papers
+  - name: arXiv cs.CL
+    url: https://export.arxiv.org/rss/cs.CL
+    source_type: 论文
+  - name: arXiv cs.LG
+    url: https://export.arxiv.org/rss/cs.LG
+    source_type: 论文
+  - name: arXiv cs.AI
+    url: https://export.arxiv.org/rss/cs.AI
+    source_type: 论文
+  - name: arXiv cs.CV
+    url: https://export.arxiv.org/rss/cs.CV
+    source_type: 论文
+
+  # Official Blogs / Labs
+  - name: OpenAI Blog
+    url: https://openai.com/blog/rss
+    source_type: 博客
+  - name: OpenAI API Changelog
+    url: https://platform.openai.com/docs/changelog/rss.xml
+    source_type: 官方文档
+  - name: Google DeepMind Blog
+    url: https://deepmind.google/discover/blog/rss/
+    source_type: 博客
+  - name: Anthropic Blog
+    url: https://www.anthropic.com/api/feeds/blog.xml
+    source_type: 博客
+  - name: Meta AI Blog
+    url: https://ai.facebook.com/blog/rss/
+    source_type: 博客
+  - name: Microsoft Research Blog
+    url: https://www.microsoft.com/en-us/research/feed/
+    source_type: 博客
+
+  # Framework / Ecosystem Releases (GitHub Atom)
+  - name: LangChain Releases
+    url: https://github.com/langchain-ai/langchain/releases.atom
+    source_type: 代码
+  - name: LangGraph Releases
+    url: https://github.com/langchain-ai/langgraph/releases.atom
+    source_type: 代码
+  - name: LlamaIndex Releases
+    url: https://github.com/run-llama/llama_index/releases.atom
+    source_type: 代码
+  - name: DSPy Releases
+    url: https://github.com/stanfordnlp/dspy/releases.atom
+    source_type: 代码
+  - name: vLLM Releases
+    url: https://github.com/vllm-project/vllm/releases.atom
+    source_type: 代码
+  - name: FAISS Releases
+    url: https://github.com/facebookresearch/faiss/releases.atom
+    source_type: 代码
+  - name: Hugging Face Transformers Releases
+    url: https://github.com/huggingface/transformers/releases.atom
+    source_type: 代码
+  - name: Text-Embedding Models (sentence-transformers) Releases
+    url: https://github.com/UKPLab/sentence-transformers/releases.atom
+    source_type: 代码
+
+  # Leaderboards / Benchmarks
+  - name: Hugging Face Open LLM Leaderboard
+    url: https://huggingface.co/api/leaderboards/open-llm/rss
+    source_type: 官方文档
+  - name: MTEB Updates
+    url: https://github.com/embeddings-benchmark/mteb/releases.atom
+    source_type: 代码
+
+  # Chinese Media
+  - name: 机器之心
+    url: https://www.jiqizhixin.com/rss
+    source_type: 新闻
+  - name: 量子位
+    url: https://www.qbitai.com/feed
+    source_type: 新闻
+  - name: AI 前线（InfoQ）
+    url: https://www.infoq.cn/publications/ai/rss
+    source_type: 新闻
+
