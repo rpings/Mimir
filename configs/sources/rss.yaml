@@ -23,13 +23,13 @@ feeds:
     url: https://platform.openai.com/docs/changelog/rss.xml
     source_type: 官方文档
   - name: Google DeepMind Blog
-    url: https://deepmind.google/discover/blog/rss/
+    url: https://deepmind.google/discover/blog/feed/
     source_type: 博客
   - name: Anthropic Blog
-    url: https://www.anthropic.com/api/feeds/blog.xml
+    url: https://www.anthropic.com/blog/feed
     source_type: 博客
   - name: Meta AI Blog
-    url: https://ai.facebook.com/blog/rss/
+    url: https://ai.meta.com/blog/feed/
     source_type: 博客
   - name: Microsoft Research Blog
     url: https://www.microsoft.com/en-us/research/feed/
@@ -45,6 +45,7 @@ feeds:
   - name: LlamaIndex Releases
     url: https://github.com/run-llama/llama_index/releases.atom
     source_type: 代码
+  # Note: DSPy releases feed may timeout, but URL is correct
   - name: DSPy Releases
     url: https://github.com/stanfordnlp/dspy/releases.atom
     source_type: 代码
@@ -62,6 +63,7 @@ feeds:
     source_type: 代码
 
   # Leaderboards / Benchmarks
+  # Note: Hugging Face leaderboard RSS may timeout, but URL is correct
   - name: Hugging Face Open LLM Leaderboard
     url: https://huggingface.co/api/leaderboards/open-llm/rss
     source_type: 官方文档
@@ -76,7 +78,8 @@ feeds:
   - name: 量子位
     url: https://www.qbitai.com/feed
     source_type: 新闻
-  - name: AI 前线（InfoQ）
-    url: https://www.infoq.cn/publications/ai/rss
-    source_type: 新闻
+  # Note: InfoQ AI feed may not be valid RSS format, removed for now
+  # - name: AI 前线（InfoQ）
+  #   url: https://www.infoq.cn/publications/ai/rss
+  #   source_type: 新闻
 
