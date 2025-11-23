@@ -178,13 +178,20 @@ class LLMProcessor(BaseProcessor):
             completion_tokens = usage.completion_tokens if hasattr(usage, "completion_tokens") else 0
             
             try:
-                cost = cost_per_token(
+                cost_result = cost_per_token(
                     model=self.model,
                     prompt_tokens=prompt_tokens,
                     completion_tokens=completion_tokens,
                 )
-            except Exception:
+                # cost_per_token returns a tuple (prompt_cost, completion_cost)
+                if isinstance(cost_result, tuple) and len(cost_result) == 2:
+                    cost = cost_result[0] + cost_result[1]
+                else:
+                    # Fallback if result is not a tuple (shouldn't happen, but be safe)
+                    cost = float(cost_result) if not isinstance(cost_result, tuple) else sum(cost_result)
+            except Exception as e:
                 # Fallback cost calculation for gpt-4o-mini
+                self.logger.debug(f"Using fallback cost calculation: {e}")
                 cost = (prompt_tokens / 1_000_000 * 0.15) + (completion_tokens / 1_000_000 * 0.6)
 
             total_tokens = prompt_tokens + completion_tokens
