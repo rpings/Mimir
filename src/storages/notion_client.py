@@ -35,7 +35,8 @@ class NotionStorage(BaseStorage):
                 Defaults to English field names if not provided.
         """
         self.client = Client(auth=token)
-        self.database_id = database_id
+        # Format database ID: remove hyphens if present (Notion API format)
+        self.database_id = database_id.replace("-", "") if database_id else database_id
         self.timezone = pytz.timezone(timezone)
         self.logger = get_logger(__name__)
         
