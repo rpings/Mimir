@@ -189,8 +189,11 @@ class NotionStorage(BaseStorage):
             if "page_size" in kwargs:
                 body["page_size"] = kwargs["page_size"]
 
+            # Format database ID: remove hyphens for URL path (Notion API requirement)
+            db_id = self.database_id.replace("-", "")
+            
             response = self.client.request(
-                path=f"databases/{self.database_id}/query",
+                path=f"databases/{db_id}/query",
                 method="POST",
                 body=body if body else None,
             )
