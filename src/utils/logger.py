@@ -44,7 +44,7 @@ def setup_logger(
 
         logger.add(
             log_path,
-            format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {extra[name]} | {message}",
+            format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name} | {message}",
             level="DEBUG",
             rotation="10 MB",
             retention="30 days",
