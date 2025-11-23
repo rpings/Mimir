@@ -1,0 +1,19 @@
+# YouTube Channel Sources Configuration
+
+channels:
+  # AI/ML Educational Channels
+  - name: Two Minute Papers
+    channel_id: UCbfYPyITQ-7l4upoX8nvctg
+    source_type: video
+  - name: 3Blue1Brown
+    channel_id: UCYO_jab_esuFRV4b17AJtAw
+    source_type: video
+  - name: Lex Fridman
+    channel_id: UCsH4u0zL8Y8qJ8qJ8qJ8qJ8
+    source_type: video
+
+  # Example with username (if available)
+  # - name: Example Channel
+  #   username: exampleuser
+  #   source_type: video
+

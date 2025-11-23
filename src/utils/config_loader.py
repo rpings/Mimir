@@ -96,6 +96,19 @@ class ConfigLoader:
         """
         return self.load_yaml("sources/rules.yaml")
 
+    def get_youtube_channels(self) -> list[dict[str, str]]:
+        """Get YouTube channel sources configuration.
+
+        Returns:
+            List of YouTube channel configurations.
+        """
+        try:
+            channels_config = self.load_yaml("sources/youtube.yaml")
+            return channels_config.get("channels", [])
+        except FileNotFoundError:
+            # YouTube config is optional
+            return []
+
 
 def load_config(config_dir: str | None = None) -> dict[str, Any]:
     """Convenience function to load main configuration.
