@@ -53,3 +53,9 @@ retry:
   max_attempts: 3
   backoff_factor: 2
 
+# DingTalk notification settings (Phase 3)
+dingtalk:
+  enabled: false  # Set to true to enable DingTalk notifications
+  webhook_url: ${DINGTALK_WEBHOOK_URL}  # From environment variable
+  secret: ${DINGTALK_SECRET}  # Optional: webhook secret for signature
+
