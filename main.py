@@ -65,6 +65,14 @@ def main() -> dict[str, int]:
 
         # Initialize cost tracker for LLM budget management
         llm_config = config.get("llm", {})
+        
+        # Auto-enable LLM if environment variables are set (even if config says disabled)
+        # This allows enabling LLM via environment variables without editing config file
+        has_llm_env = bool(os.environ.get("OPENAI_API_KEY") or os.environ.get("LLM_BASE_URL"))
+        if has_llm_env and not llm_config.get("enabled", False):
+            logger.info("LLM environment variables detected, auto-enabling LLM processing")
+            llm_config["enabled"] = True
+        
         cost_tracker = CostTracker(
             daily_limit=llm_config.get("daily_limit", 5.0),
             monthly_budget=llm_config.get("monthly_budget", 50.0),
