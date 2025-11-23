@@ -57,7 +57,7 @@ class BaseCollector(ABC):
     """
 
     @abstractmethod
-    def collect(self) -> list[CollectedEntry]:
+    def collect(self) -> list[CollectedEntry]:  # pragma: no cover
         """Collect data from source.
 
         Returns:
@@ -79,7 +79,7 @@ class BaseCollector(ABC):
         pass
 
     @abstractmethod
-    def get_source_name(self) -> str:
+    def get_source_name(self) -> str:  # pragma: no cover
         """Get the name of this data source.
 
         Returns:

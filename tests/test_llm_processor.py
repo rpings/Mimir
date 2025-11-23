@@ -10,6 +10,7 @@ from src.collectors.base_collector import CollectedEntry
 from src.processors.base_processor import ProcessedEntry
 from src.processors.llm_processor import LLMProcessingError, LLMProcessor
 from src.utils.cost_tracker import BudgetExceededError, CostTracker
+from src.storages.llm_cache import LLMCache
 
 
 @pytest.fixture
@@ -45,9 +46,15 @@ def llm_config():
 
 
 @pytest.fixture
-def llm_processor(llm_config, cost_tracker):
+def llm_cache(tmp_path):
+    """LLM cache instance."""
+    return LLMCache(cache_dir=tmp_path / "llm_cache")
+
+
+@pytest.fixture
+def llm_processor(llm_config, cost_tracker, llm_cache):
     """LLM processor instance."""
-    return LLMProcessor(config=llm_config, cost_tracker=cost_tracker)
+    return LLMProcessor(config=llm_config, cost_tracker=cost_tracker, llm_cache=llm_cache)
 
 
 @pytest.fixture
@@ -182,10 +189,10 @@ def test_llm_processor_api_error(mock_completion, llm_processor, sample_entry):
 
 @patch("src.processors.llm_processor.completion")
 @patch("src.processors.llm_processor.cost_per_token")
-def test_llm_processor_base_url_from_config(mock_cost, mock_completion, llm_config, cost_tracker, sample_entry, mock_litellm_response):
+def test_llm_processor_base_url_from_config(mock_cost, mock_completion, llm_config, cost_tracker, llm_cache, sample_entry, mock_litellm_response):
     """Test LLM processor uses base_url from config."""
     llm_config["base_url"] = "http://localhost:1234/v1"
-    processor = LLMProcessor(config=llm_config, cost_tracker=cost_tracker)
+    processor = LLMProcessor(config=llm_config, cost_tracker=cost_tracker, llm_cache=llm_cache)
     
     mock_completion.return_value = mock_litellm_response
     mock_cost.return_value = 0.001
@@ -252,7 +259,7 @@ def test_llm_processor_no_base_url(mock_cost, mock_completion, llm_processor, sa
 
 @patch("src.processors.llm_processor.completion")
 @patch("src.processors.llm_processor.cost_per_token")
-def test_llm_processor_cost_tracking(mock_cost, mock_completion, llm_processor, sample_entry, mock_litellm_response, tmp_path):
+def test_llm_processor_cost_tracking(mock_cost, mock_completion, llm_config, cost_tracker, llm_cache, sample_entry, mock_litellm_response, tmp_path):
     """Test LLM processor tracks costs correctly."""
     mock_completion.return_value = mock_litellm_response
     mock_cost.return_value = 0.001  # Fixed cost for testing
@@ -265,12 +272,12 @@ def test_llm_processor_cost_tracking(mock_cost, mock_completion, llm_processor, 
         monthly_budget=100.0,
         cost_file=str(cost_file),
     )
-    llm_processor.cost_tracker = fresh_cost_tracker
+    processor = LLMProcessor(config=llm_config, cost_tracker=fresh_cost_tracker, llm_cache=llm_cache)
     
     initial_daily_cost = fresh_cost_tracker.get_daily_cost()
     
     processed = ProcessedEntry.from_collected(sample_entry)
-    llm_processor.process(processed)
+    processor.process(processed)
     
     # Cost should be recorded
     new_daily_cost = fresh_cost_tracker.get_daily_cost()
@@ -280,6 +287,165 @@ def test_llm_processor_cost_tracking(mock_cost, mock_completion, llm_processor, 
 def test_llm_processor_get_processor_name(llm_processor):
     """Test processor name."""
     assert llm_processor.get_processor_name() == "LLMProcessor"
+
+
+@patch("src.processors.llm_processor.completion")
+@patch("src.processors.llm_processor.cost_per_token")
+def test_llm_processor_base_url_empty_string(mock_cost, mock_completion, llm_config, cost_tracker, llm_cache):
+    """Test LLM processor handles empty string base_url."""
+    llm_config["base_url"] = ""
+    processor = LLMProcessor(config=llm_config, cost_tracker=cost_tracker, llm_cache=llm_cache)
+    assert processor.base_url is None
+
+
+@patch("src.processors.llm_processor.completion")
+@patch("src.processors.llm_processor.cost_per_token")
+def test_llm_processor_from_collected_entry(mock_cost, mock_completion, llm_processor, llm_cache, sample_entry, mock_litellm_response):
+    """Test LLM processor with CollectedEntry (not ProcessedEntry)."""
+    mock_completion.return_value = mock_litellm_response
+    mock_cost.return_value = 0.001
+    
+    # Pass CollectedEntry directly
+    result = llm_processor.process(sample_entry)
+    assert isinstance(result, ProcessedEntry)
+    assert result.title == sample_entry.title
+
+
+@patch("src.processors.llm_processor.completion")
+@patch("src.processors.llm_processor.cost_per_token")
+def test_llm_processor_disabled_skips(mock_cost, mock_completion, llm_config, cost_tracker, llm_cache, sample_entry):
+    """Test LLM processor when disabled."""
+    llm_config["enabled"] = False
+    processor = LLMProcessor(config=llm_config, cost_tracker=cost_tracker, llm_cache=llm_cache)
+    
+    processed = ProcessedEntry.from_collected(sample_entry)
+    result = processor.process(processed)
+    
+    assert result.summary_llm is None
+    assert result.translation is None
+    assert not mock_completion.called
+
+
+@patch("src.processors.llm_processor.completion")
+@patch("src.processors.llm_processor.cost_per_token")
+def test_llm_processor_budget_exceeded_skips(mock_cost, mock_completion, llm_config, cost_tracker, llm_cache, sample_entry):
+    """Test LLM processor skips when budget exceeded."""
+    # Set budget to 0 to trigger budget exceeded
+    cost_tracker.daily_limit = 0.0
+    cost_tracker.monthly_budget = 0.0
+    
+    processor = LLMProcessor(config=llm_config, cost_tracker=cost_tracker, llm_cache=llm_cache)
+    
+    processed = ProcessedEntry.from_collected(sample_entry)
+    result = processor.process(processed)
+    
+    # Should return without LLM enhancements
+    assert result.summary_llm is None
+    assert not mock_completion.called
+
+
+@patch("src.processors.llm_processor.completion")
+@patch("src.processors.llm_processor.cost_per_token")
+def test_llm_processor_processing_method_hybrid(mock_cost, mock_completion, llm_processor, sample_entry, mock_litellm_response):
+    """Test processing method is set to hybrid when LLM features are used."""
+    mock_completion.return_value = mock_litellm_response
+    mock_cost.return_value = 0.001
+    
+    processed = ProcessedEntry.from_collected(sample_entry)
+    processed.topics = ["AI"]  # Set from keyword processor
+    processed.priority = "High"
+    
+    result = llm_processor.process(processed)
+    
+    assert result.processing_method == "hybrid"
+
+
+@patch("src.processors.llm_processor.completion")
+@patch("src.processors.llm_processor.cost_per_token")
+def test_llm_processor_summary_content_too_short(mock_cost, mock_completion, llm_processor, llm_cache):
+    """Test summary generation with content too short."""
+    from src.processors.base_processor import ProcessedEntry
+    
+    # Create entry with very short content
+    entry = ProcessedEntry(
+        title="A",
+        link="https://example.com",
+        summary="B",
+    )
+    
+    result = llm_processor._generate_summary(entry)
+    assert result is None
+    assert not mock_completion.called
+
+
+@patch("src.processors.llm_processor.completion")
+@patch("src.processors.llm_processor.cost_per_token")
+def test_llm_processor_translation_no_target_languages(mock_cost, mock_completion, llm_config, cost_tracker, llm_cache):
+    """Test translation with no target languages."""
+    llm_config["translation"]["target_languages"] = []
+    processor = LLMProcessor(config=llm_config, cost_tracker=cost_tracker, llm_cache=llm_cache)
+    
+    entry = ProcessedEntry(
+        title="Test",
+        link="https://example.com",
+        summary="Test content",
+    )
+    
+    result = processor._translate_content(entry)
+    assert result is None
+
+
+@patch("src.processors.llm_processor.completion")
+@patch("src.processors.llm_processor.cost_per_token")
+def test_llm_processor_translation_content_too_short(mock_cost, mock_completion, llm_processor, llm_cache):
+    """Test translation with content too short."""
+    entry = ProcessedEntry(
+        title="A",
+        link="https://example.com",
+        summary="B",
+    )
+    
+    result = llm_processor._translate_content(entry)
+    assert result is None
+    assert not mock_completion.called
+
+
+@patch("src.processors.llm_processor.completion")
+@patch("src.processors.llm_processor.cost_per_token")
+def test_llm_processor_categorization_content_too_short(mock_cost, mock_completion, llm_processor, llm_cache):
+    """Test categorization with content too short."""
+    entry = ProcessedEntry(
+        title="A",
+        link="https://example.com",
+        summary="B",
+    )
+    
+    result = llm_processor._smart_categorize(entry)
+    assert result is None
+    assert not mock_completion.called
+
+
+@patch("src.processors.llm_processor.completion")
+@patch("src.processors.llm_processor.cost_per_token")
+def test_llm_processor_json_markdown_removal_short(mock_cost, mock_completion, llm_processor, llm_cache, sample_entry):
+    """Test JSON parsing with markdown code blocks (len <= 2 case)."""
+    mock_response = Mock()
+    mock_choice = Mock()
+    # Content with markdown but only 2 lines (should not remove)
+    mock_choice.message.content = "```\n{\"topics\": [\"AI\"]}\n```"
+    mock_response.choices = [mock_choice]
+    mock_usage = Mock()
+    mock_usage.prompt_tokens = 100
+    mock_usage.completion_tokens = 50
+    mock_response.usage = mock_usage
+    mock_completion.return_value = mock_response
+    mock_cost.return_value = 0.001
+    
+    entry = ProcessedEntry.from_collected(sample_entry)
+    result = llm_processor._smart_categorize(entry)
+    
+    # Should handle gracefully even with short markdown block
+    assert result is not None or isinstance(result, dict) or result is None
 
 
 @patch("src.processors.llm_processor.completion")

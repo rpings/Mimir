@@ -70,6 +70,14 @@ def main() -> dict[str, int]:
             monthly_budget=llm_config.get("monthly_budget", 50.0),
         )
 
+        # Initialize LLM cache
+        llm_cache_config = llm_config.get("cache", {})
+        from src.storages.llm_cache import LLMCache
+        llm_cache = LLMCache(
+            cache_dir=llm_cache_config.get("path"),
+            ttl_days=llm_cache_config.get("ttl_days", 30),
+        )
+
         # Create processor pipeline using LangChain
         keyword_processor = KeywordProcessor(rules=rules)
         processors = [keyword_processor]
@@ -80,6 +88,7 @@ def main() -> dict[str, int]:
                 llm_processor = LLMProcessor(
                     config=llm_config,
                     cost_tracker=cost_tracker,
+                    llm_cache=llm_cache,
                 )
                 processors.append(llm_processor)
                 logger.info("LLM processing enabled")

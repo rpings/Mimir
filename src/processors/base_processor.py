@@ -55,7 +55,7 @@ class BaseProcessor(ABC):
     """Abstract base class for content processors."""
 
     @abstractmethod
-    def process(self, entry: CollectedEntry) -> ProcessedEntry:
+    def process(self, entry: CollectedEntry) -> ProcessedEntry:  # pragma: no cover
         """Process a single content entry.
 
         Args:
@@ -71,7 +71,7 @@ class BaseProcessor(ABC):
         pass
 
     @abstractmethod
-    def get_processor_name(self) -> str:
+    def get_processor_name(self) -> str:  # pragma: no cover
         """Get the name of this processor.
 
         Returns:

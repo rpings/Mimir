@@ -12,7 +12,7 @@ class BaseStorage(ABC):
     """Abstract base class for data storage."""
 
     @abstractmethod
-    def exists(self, entry: CollectedEntry | ProcessedEntry) -> bool:
+    def exists(self, entry: CollectedEntry | ProcessedEntry) -> bool:  # pragma: no cover
         """Check if entry already exists in storage.
 
         Args:
@@ -24,7 +24,7 @@ class BaseStorage(ABC):
         pass
 
     @abstractmethod
-    def save(self, entry: ProcessedEntry) -> bool:
+    def save(self, entry: ProcessedEntry) -> bool:  # pragma: no cover
         """Save entry to storage.
 
         Args:
@@ -46,7 +46,7 @@ class BaseStorage(ABC):
         pass
 
     @abstractmethod
-    def query(self, **kwargs: Any) -> list[ProcessedEntry]:
+    def query(self, **kwargs: Any) -> list[ProcessedEntry]:  # pragma: no cover
         """Query entries from storage.
 
         Args:

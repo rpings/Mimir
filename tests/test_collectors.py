@@ -119,8 +119,8 @@ def test_rss_collector_entry_without_link(sample_feed_config):
         assert str(entries[0].link).rstrip("/") == "https://example.com"
 
 
-def test_rss_collector_date_parsing(sample_feed_config):
-    """Test RSS collector date parsing."""
+def test_rss_collector_date_parsing_exceptions(sample_feed_config):
+    """Test RSS collector date parsing with various exceptions."""
     with patch("src.collectors.rss_collector.feedparser") as mock:
         from time import struct_time
         mock_feed = Mock()

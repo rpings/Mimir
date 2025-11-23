@@ -27,6 +27,7 @@ class LLMProcessor(BaseProcessor):
         self,
         config: dict[str, Any],
         cost_tracker: CostTracker,
+        llm_cache: "LLMCache | None" = None,
     ):
         """Initialize LLM processor.
 
@@ -42,6 +43,7 @@ class LLMProcessor(BaseProcessor):
         """
         self.config = config
         self.cost_tracker = cost_tracker
+        self.llm_cache = llm_cache
         self.enabled = config.get("enabled", False)
         self.provider = config.get("provider", "openai")
         self.model = config.get("model", "gpt-4o-mini")
@@ -252,6 +254,14 @@ class LLMProcessor(BaseProcessor):
 
         translations = {}
         for lang in self.target_languages:
+            # Check cache first
+            cache_key = f"{content}:{lang}"
+            if self.llm_cache:
+                cached = self.llm_cache.get(cache_key, "translation")
+                if cached and isinstance(cached, dict):
+                    translations[lang] = cached.get(lang, "")
+                    continue
+
             try:
                 messages = [
                     {
@@ -265,7 +275,11 @@ class LLMProcessor(BaseProcessor):
                 ]
 
                 result = self._call_llm(messages, temperature=0.2)
-                translations[lang] = result["content"].strip()
+                translated_text = result["content"].strip()
+                translations[lang] = translated_text
+                # Cache result
+                if self.llm_cache:
+                    self.llm_cache.set(cache_key, "translation", {lang: translated_text})
             except (LLMProcessingError, BudgetExceededError) as e:
                 self.logger.warning(f"Failed to translate to {lang}: {e}")
                 # Continue with other languages
@@ -284,6 +298,12 @@ class LLMProcessor(BaseProcessor):
         content = f"{entry.title}\n\n{entry.summary or ''}"
         if len(content) < 20:
             return None
+
+        # Check cache first
+        if self.llm_cache:
+            cached = self.llm_cache.get(content, "categorization")
+            if cached and isinstance(cached, dict):
+                return cached
 
         messages = [
             {
@@ -307,10 +327,14 @@ class LLMProcessor(BaseProcessor):
                 content_text = "\n".join(lines[1:-1]) if len(lines) > 2 else content_text
 
             categories = json.loads(content_text)
-            return {
+            result_dict = {
                 "topics": categories.get("topics", []),
                 "priority": categories.get("priority", "Low"),
             }
+            # Cache result
+            if self.llm_cache:
+                self.llm_cache.set(content, "categorization", result_dict)
+            return result_dict
         except (LLMProcessingError, BudgetExceededError, json.JSONDecodeError) as e:
             self.logger.warning(f"Failed to categorize with LLM: {e}")
             return None
