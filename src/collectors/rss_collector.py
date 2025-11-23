@@ -5,6 +5,8 @@ import feedparser
 from datetime import datetime
 from typing import Any
 
+import httpx
+
 from src.collectors.base_collector import BaseCollector, CollectedEntry
 from src.utils.logger import get_logger
 from src.utils.retry_handler import retry_on_connection_error
@@ -30,6 +32,51 @@ class RSSCollector(BaseCollector):
         self.feed_config = feed_config
         self.max_entries = max_entries
         self.logger = get_logger(__name__)
+
+    async def acollect(self) -> list[CollectedEntry]:
+        """Collect entries from RSS feed asynchronously.
+
+        Returns:
+            List of feed entries.
+
+        Raises:
+            ValueError: If feed URL is invalid or feed parsing fails.
+            ConnectionError: If connection to feed fails.
+        """
+        url = self.feed_config.get("url")
+        if not url:
+            raise ValueError("Feed URL is required")
+
+        try:
+            # Use httpx for async HTTP requests
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.get(url)
+                response.raise_for_status()
+                feed_content = response.text
+
+            # Parse feed (feedparser is sync, but we're in async context)
+            feed = feedparser.parse(feed_content)
+
+            # Check for parsing errors
+            if feed.bozo:
+                error_msg = str(feed.bozo_exception) if hasattr(feed, 'bozo_exception') else "Unknown error"
+                self.logger.warning(f"RSS feed parsing warning for {url}: {error_msg}")
+
+            entries = []
+            for entry in feed.entries[:self.max_entries]:
+                processed_entry = self._process_entry(entry)
+                if processed_entry:
+                    entries.append(processed_entry)
+
+            self.logger.info(f"Collected {len(entries)} entries from {self.feed_config.get('name', 'Unknown')}")
+            return entries
+
+        except httpx.HTTPError as e:
+            self.logger.error(f"HTTP error fetching RSS feed {url}: {e}")
+            raise ValueError(f"Failed to fetch RSS feed: {e}") from e
+        except Exception as e:
+            self.logger.error(f"Unexpected error collecting RSS feed {url}: {e}")
+            raise ValueError(f"Failed to parse RSS feed: {e}") from e
 
     @retry_on_connection_error(max_attempts=3)
     def collect(self) -> list[CollectedEntry]:

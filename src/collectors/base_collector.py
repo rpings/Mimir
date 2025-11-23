@@ -78,6 +78,23 @@ class BaseCollector(ABC):
         """
         pass
 
+    async def acollect(self) -> list[CollectedEntry]:  # pragma: no cover
+        """Collect data from source asynchronously.
+
+        Default implementation calls synchronous collect().
+        Override for async-optimized collectors.
+
+        Returns:
+            List of collected items, each conforming to CollectedEntry contract.
+
+        Raises:
+            ValueError: If collection fails due to invalid configuration.
+            ConnectionError: If connection to source fails.
+            TimeoutError: If request times out.
+        """
+        import asyncio
+        return await asyncio.to_thread(self.collect)
+
     @abstractmethod
     def get_source_name(self) -> str:  # pragma: no cover
         """Get the name of this data source.
