@@ -10,6 +10,7 @@ from litellm.exceptions import APIError, RateLimitError
 
 from src.collectors.base_collector import CollectedEntry
 from src.processors.base_processor import BaseProcessor, ProcessedEntry
+from src.processors.processing_context import ProcessingContext
 from src.utils.cost_tracker import BudgetExceededError, CostTracker
 from src.utils.logger import get_logger
 
@@ -40,10 +41,12 @@ class LLMProcessor(BaseProcessor):
                 - features: dict with summarization, translation, smart_categorization
                 - translation: dict with target_languages
             cost_tracker: CostTracker instance for budget management.
+            llm_cache: Optional LLM cache instance.
         """
-        self.config = config
+        super().__init__(config)
         self.cost_tracker = cost_tracker
         self.llm_cache = llm_cache
+        # Override enabled from config (LLM processor has special enabled logic)
         self.enabled = config.get("enabled", False)
         self.provider = config.get("provider", "openai")
         
@@ -63,14 +66,19 @@ class LLMProcessor(BaseProcessor):
         
         self.logger = get_logger(__name__)
 
-    def process(self, entry: CollectedEntry) -> ProcessedEntry:
+    def process(
+        self,
+        entry: CollectedEntry | ProcessedEntry,
+        context: ProcessingContext | None = None,
+    ) -> ProcessedEntry | None:
         """Process entry using LLM enhancements.
 
         Args:
-            entry: CollectedEntry to process (should already have topics/priority from keyword processor).
+            entry: CollectedEntry or ProcessedEntry to process (should already have topics/priority from keyword processor).
+            context: Optional processing context (not used in LLM processor).
 
         Returns:
-            ProcessedEntry with LLM enhancements added.
+            ProcessedEntry with LLM enhancements added, or None if skipped.
         """
         # Convert to ProcessedEntry if needed
         if isinstance(entry, ProcessedEntry):

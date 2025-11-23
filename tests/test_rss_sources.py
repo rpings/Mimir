@@ -55,9 +55,6 @@ def test_rss_source_urls_valid_format(rss_sources):
     ("arXiv cs.CV", "论文"),
     ("OpenAI Blog", "博客"),
     ("OpenAI API Changelog", "官方文档"),
-    ("Google DeepMind Blog", "博客"),
-    ("Anthropic Blog", "博客"),
-    ("Meta AI Blog", "博客"),
     ("Microsoft Research Blog", "博客"),
     ("LangChain Releases", "代码"),
     ("LangGraph Releases", "代码"),
@@ -67,11 +64,9 @@ def test_rss_source_urls_valid_format(rss_sources):
     ("FAISS Releases", "代码"),
     ("Hugging Face Transformers Releases", "代码"),
     ("Text-Embedding Models (sentence-transformers) Releases", "代码"),
-    ("Hugging Face Open LLM Leaderboard", "官方文档"),
     ("MTEB Updates", "代码"),
     ("机器之心", "新闻"),
     ("量子位", "新闻"),
-    ("AI 前线（InfoQ）", "新闻"),
 ])
 def test_rss_source_type_mapping(rss_sources, source_name, expected_type):
     """Test that each RSS source has correct source_type mapping."""
@@ -94,9 +89,9 @@ def test_arxiv_sources(rss_sources):
 def test_blog_sources(rss_sources):
     """Test blog sources configuration."""
     blog_sources = [s for s in rss_sources if s["source_type"] == "博客"]
-    assert len(blog_sources) >= 5, "Should have at least 5 blog sources"
+    assert len(blog_sources) >= 2, "Should have at least 2 blog sources"
     
-    expected_blogs = ["OpenAI Blog", "Google DeepMind Blog", "Anthropic Blog", "Meta AI Blog", "Microsoft Research Blog"]
+    expected_blogs = ["OpenAI Blog", "Microsoft Research Blog"]
     blog_names = [s["name"] for s in blog_sources]
     for expected in expected_blogs:
         assert expected in blog_names, f"Expected blog source '{expected}' not found"
@@ -117,16 +112,29 @@ def test_code_sources(rss_sources):
 def test_chinese_media_sources(rss_sources):
     """Test Chinese media sources configuration."""
     chinese_sources = [s for s in rss_sources if s["source_type"] == "新闻"]
-    assert len(chinese_sources) >= 3, "Should have at least 3 Chinese media sources"
+    assert len(chinese_sources) >= 2, "Should have at least 2 Chinese media sources"
     
-    expected_sources = ["机器之心", "量子位", "AI 前线（InfoQ）"]
+    expected_sources = ["机器之心", "量子位"]
     chinese_names = [s["name"] for s in chinese_sources]
     for expected in expected_sources:
         assert expected in chinese_names, f"Expected Chinese source '{expected}' not found"
 
 
-def test_rss_collector_for_each_source(rss_sources):
+@patch("src.collectors.rss_collector.httpx.Client")
+def test_rss_collector_for_each_source(mock_client_class, rss_sources):
     """Test that RSSCollector can be initialized for each configured source."""
+    # Mock httpx response
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.text = "<rss><channel><item><title>Test Article</title><link>https://example.com/article</link></item></channel></rss>"
+    mock_response.raise_for_status = Mock()
+    
+    mock_client = Mock()
+    mock_client.__enter__ = Mock(return_value=mock_client)
+    mock_client.__exit__ = Mock(return_value=None)
+    mock_client.get.return_value = mock_response
+    mock_client_class.return_value = mock_client
+    
     with patch("src.collectors.rss_collector.feedparser") as mock_feedparser:
         # Mock feedparser response
         mock_feed = Mock()

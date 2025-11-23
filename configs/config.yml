@@ -22,6 +22,53 @@ processing:
   enable_keyword_classification: true  # Phase 1: use keyword-based classification
   deduplication:
     method: url  # url, semantic, both
+  
+  # Content cleaning processor
+  cleaning:
+    enabled: true
+    remove_ads: true
+    normalize_encoding: true
+    max_summary_length: 500
+  
+  # Quality assessment processor
+  quality:
+    enabled: true
+    min_quality_score: 0.3  # Entries below this score will be filtered
+    source_whitelist: []  # Trusted source domains (e.g., ["arxiv.org", "github.com"])
+    source_blacklist: []  # Untrusted source domains
+    min_content_length: 50  # Minimum content length in characters
+  
+  # Semantic deduplication processor
+  semantic_dedup:
+    enabled: false  # Disabled by default (requires sentence-transformers)
+    similarity_threshold: 0.85  # Similarity threshold for duplicates
+    embedding_model: null  # Model name (e.g., "sentence-transformers/all-MiniLM-L6-v2")
+    use_openai_embedding: false  # Use OpenAI embeddings instead
+  
+  # Information verification processor
+  verification:
+    enabled: true
+    verify_source: true  # Verify source domain
+    cross_verify: false  # Cross-verify with other sources
+    fact_check_llm: false  # Use LLM for fact-checking (expensive)
+    source_whitelist: []  # Trusted source domains
+  
+  # Knowledge extraction processor
+  knowledge_extraction:
+    enabled: true
+    extract_entities: true  # Extract entities (people, organizations, technologies)
+    extract_relations: true  # Extract relations between entities
+    extract_key_points: true  # Extract key points
+    use_llm: false  # Use LLM for extraction (optional)
+  
+  # Priority ranking processor
+  ranking:
+    enabled: true
+    weights:
+      quality: 0.4  # Weight for quality score
+      relevance: 0.3  # Weight for relevance
+      timeliness: 0.2  # Weight for timeliness
+      source: 0.1  # Weight for source authority
 
 # LLM settings (Phase 2)
 llm:

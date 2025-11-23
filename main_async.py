@@ -14,6 +14,12 @@ from src.processors.deduplicator import Deduplicator
 from src.processors.keyword_processor import KeywordProcessor
 from src.processors.llm_processor import LLMProcessor
 from src.processors.processor_pipeline import ProcessorPipeline
+from src.processors.content_cleaner_processor import ContentCleanerProcessor
+from src.processors.quality_assessment_processor import QualityAssessmentProcessor
+from src.processors.semantic_deduplicator_processor import SemanticDeduplicatorProcessor
+from src.processors.information_verification_processor import InformationVerificationProcessor
+from src.processors.knowledge_extraction_processor import KnowledgeExtractionProcessor
+from src.processors.priority_ranking_processor import PriorityRankingProcessor
 from src.storages.cache_manager import CacheManager
 from src.storages.notion_client import NotionStorage
 from src.utils.config_loader import ConfigLoader
@@ -66,11 +72,21 @@ async def process_feed_async(
                     # Process entry through pipeline (async)
                     try:
                         processed_entry = await pipeline.aprocess(entry)
+                        # Check if entry was skipped (None return)
+                        if processed_entry is None:
+                            stats["skipped"] += 1
+                            logger.debug(f"Skipped by pipeline: {entry.title[:50]}")
+                            return
                     except BudgetExceededError as e:
                         # Budget exceeded, continue with keyword-only processing
                         logger.warning(f"Budget exceeded, using keyword-only processing: {e}")
                         # Re-process with keyword processor only (sync, but fast)
-                        processed_entry = keyword_processor.process(entry)
+                        # Get context from pipeline
+                        context = pipeline.context if hasattr(pipeline, 'context') else None
+                        processed_entry = keyword_processor.process(entry, context)
+                        if processed_entry is None:
+                            stats["skipped"] += 1
+                            return
 
                     # Save to Notion (sync, but we're in async context)
                     if storage.save(processed_entry):
@@ -163,11 +179,63 @@ async def main_async() -> dict[str, int]:
             ttl_days=llm_cache_config.get("ttl_days", 30),
         )
 
-        # Create processor pipeline using LangChain
-        keyword_processor = KeywordProcessor(rules=rules)
-        processors = [keyword_processor]
+        # Create processing context
+        from src.processors.processing_context import ProcessingContext
+        processing_context = ProcessingContext(
+            cache=llm_cache,
+            config=config,
+        )
 
-        # Add LLMProcessor if enabled
+        # Create processor pipeline using LangChain
+        processors = []
+
+        # 1. Content cleaning processor
+        cleaning_config = config.get("processing", {}).get("cleaning", {})
+        if cleaning_config.get("enabled", True):
+            cleaning_processor = ContentCleanerProcessor(config=cleaning_config)
+            processors.append(cleaning_processor)
+            logger.debug("Content cleaning processor enabled")
+
+        # 2. Quality assessment processor
+        quality_config = config.get("processing", {}).get("quality", {})
+        if quality_config.get("enabled", True):
+            quality_processor = QualityAssessmentProcessor(config=quality_config)
+            processors.append(quality_processor)
+            logger.debug("Quality assessment processor enabled")
+
+        # 3. Semantic deduplication processor (optional)
+        semantic_dedup_config = config.get("processing", {}).get("semantic_dedup", {})
+        if semantic_dedup_config.get("enabled", False):
+            semantic_processor = SemanticDeduplicatorProcessor(config=semantic_dedup_config)
+            processors.append(semantic_processor)
+            logger.debug("Semantic deduplication processor enabled")
+
+        # 4. Information verification processor
+        verification_config = config.get("processing", {}).get("verification", {})
+        if verification_config.get("enabled", True):
+            verification_processor = InformationVerificationProcessor(config=verification_config)
+            processors.append(verification_processor)
+            logger.debug("Information verification processor enabled")
+
+        # 5. Keyword classification processor
+        keyword_processor = KeywordProcessor(rules=rules)
+        processors.append(keyword_processor)
+
+        # 6. Knowledge extraction processor
+        knowledge_config = config.get("processing", {}).get("knowledge_extraction", {})
+        if knowledge_config.get("enabled", True):
+            knowledge_processor = KnowledgeExtractionProcessor(config=knowledge_config)
+            processors.append(knowledge_processor)
+            logger.debug("Knowledge extraction processor enabled")
+
+        # 7. Priority ranking processor
+        ranking_config = config.get("processing", {}).get("ranking", {})
+        if ranking_config.get("enabled", True):
+            ranking_processor = PriorityRankingProcessor(config=ranking_config)
+            processors.append(ranking_processor)
+            logger.debug("Priority ranking processor enabled")
+
+        # 8. Add LLMProcessor if enabled
         if llm_config.get("enabled", False):
             try:
                 llm_processor = LLMProcessor(
@@ -182,7 +250,7 @@ async def main_async() -> dict[str, int]:
         else:
             logger.debug("LLM processing disabled")
 
-        pipeline = ProcessorPipeline(processors=processors)
+        pipeline = ProcessorPipeline(processors=processors, context=processing_context)
 
         # Statistics
         total_stats = {"created": 0, "skipped": 0, "errors": 0}

@@ -9,11 +9,11 @@ AI intelligence collection and organization system. Automatically collects, proc
 
 ## Features
 
-- **Multi-source collection**: RSS feeds, YouTube channels, Twitter/X (placeholder)
-- **Intelligent processing**: Keyword classification + optional LLM enhancement
-- **Storage**: Notion integration, DingTalk notifications
-- **Performance**: Async processing, caching, deduplication
-- **Cost control**: Budget limits, cost tracking, local model support
+- Multi-source collection: RSS feeds, YouTube channels
+- Processing pipeline: content cleaning, quality assessment, deduplication, classification, knowledge extraction
+- Optional LLM enhancement: summarization, translation, categorization
+- Notion integration for archiving
+- Cost control with budget limits
 
 ## Quick Start
 
@@ -33,89 +33,43 @@ pip install -r requirements.txt
    export NOTION_DATABASE_ID="your_database_id"
    # Optional: LLM features
    export OPENAI_API_KEY="sk-..."
-   export LLM_MODEL="gpt-4o-mini"  # Overrides config, optional
-   export LLM_BASE_URL="http://localhost:11434/v1"  # For local models
    ```
 
 2. Edit configuration files:
    - `configs/sources/rss.yaml` - RSS feeds
-   - `configs/sources/youtube.yaml` - YouTube channels
    - `configs/sources/rules.yaml` - Classification rules
    - `configs/config.yml` - Main config
 
 ### Run
 
 ```bash
-# Sync mode
-python main.py
-
-# Async mode (recommended)
-python main_async.py
-
-# Or use run script
-./run.sh          # sync
-./run.sh async    # async
+python main.py          # Sync mode
+python main_async.py     # Async mode
 ```
 
 ## Configuration
 
-### Main Config (`configs/config.yml`)
+See `configs/config.yml` for full configuration options.
 
-```yaml
-timezone: Asia/Shanghai
+Key settings:
+- Processing pipeline processors (cleaning, quality, verification, etc.)
+- LLM settings (optional, requires API key)
+- Notion database configuration
 
-notion:
-  database_id: ${NOTION_DATABASE_ID}
+## LLM Setup (Optional)
 
-llm:
-  enabled: false  # Enable for LLM features
-  provider: openai
-  model: gpt-4o-mini
-  base_url: null  # Custom API URL (e.g., local models)
-  daily_limit: 5.0
-  monthly_budget: 50.0
-  features:
-    summarization: true
-    translation: true
-    smart_categorization: true
+To enable LLM features:
 
-dingtalk:
-  enabled: false
-  webhook_url: ${DINGTALK_WEBHOOK_URL}
-  secret: ${DINGTALK_SECRET}
-```
+1. Set `OPENAI_API_KEY` environment variable
+2. Enable in `configs/config.yml`:
+   ```yaml
+   llm:
+     enabled: true
+     provider: openai
+     model: gpt-4o-mini
+   ```
 
-## LLM Setup
-
-### OpenAI
-
-```bash
-export OPENAI_API_KEY="sk-..."
-```
-
-Enable in `configs/config.yml`:
-```yaml
-llm:
-  enabled: true
-  provider: openai
-  model: gpt-4o-mini
-```
-
-### Local Models (Ollama, vLLM)
-
-```yaml
-llm:
-  enabled: true
-  provider: openai
-  model: llama3
-  base_url: "http://localhost:11434/v1"
-```
-
-Or: `export LLM_BASE_URL="http://localhost:11434/v1"`
-
-**Priority**: 
-- Model: `LLM_MODEL` env var > config `model` > default
-- Base URL: `LLM_BASE_URL` env var > config `base_url` > provider default
+For local models, set `base_url` in config or `LLM_BASE_URL` environment variable.
 
 ## Development
 
@@ -126,45 +80,13 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 # Test
-pytest tests/ --cov=src
+pytest tests/
 
 # Code quality
 black src/ tests/
-isort src/ tests/
 ruff check src/ tests/
-mypy src/
 ```
-
-## Project Structure
-
-```
-Mimir/
-├── src/
-│   ├── collectors/    # RSS, YouTube, Twitter
-│   ├── processors/    # Keyword, LLM, pipeline
-│   ├── storages/      # Notion, DingTalk, cache
-│   └── utils/         # Config, logger, retry
-├── configs/           # Configuration files
-├── tests/             # Test suite (94% coverage)
-├── main.py            # Sync entry point
-└── main_async.py      # Async entry point
-```
-
-## Cost
-
-- **Without LLM**: $0 (GitHub Actions free tier)
-- **With LLM**: ~$30-150/month (configurable limits)
-- **Local models**: $0 (use `base_url`)
 
 ## License
 
 MIT License - see [LICENSE](LICENSE) file.
-
-## Contributing
-
-1. Fork the repository
-2. Create feature branch: `git checkout -b feature/amazing-feature`
-3. Follow coding standards in `.cursor/rules/`
-4. Write tests
-5. Commit with [Conventional Commits](https://www.conventionalcommits.org/)
-6. Push and open Pull Request

@@ -191,20 +191,22 @@ def test_llm_processor_api_error(mock_completion, llm_processor, sample_entry):
 @patch("src.processors.llm_processor.cost_per_token")
 def test_llm_processor_base_url_from_config(mock_cost, mock_completion, llm_config, cost_tracker, llm_cache, sample_entry, mock_litellm_response):
     """Test LLM processor uses base_url from config."""
-    llm_config["base_url"] = "http://localhost:1234/v1"
-    processor = LLMProcessor(config=llm_config, cost_tracker=cost_tracker, llm_cache=llm_cache)
-    
-    mock_completion.return_value = mock_litellm_response
-    mock_cost.return_value = 0.001
-    processed = ProcessedEntry.from_collected(sample_entry)
-    processor.process(processed)
-    
-    # Check that api_base was passed to litellm
-    assert mock_completion.called
-    call_args = mock_completion.call_args
-    assert call_args is not None
-    assert "api_base" in call_args.kwargs
-    assert call_args.kwargs["api_base"] == "http://localhost:1234/v1"
+    # Clear env var to ensure config is used
+    with patch.dict(os.environ, {"LLM_BASE_URL": ""}, clear=False):
+        llm_config["base_url"] = "http://localhost:1234/v1"
+        processor = LLMProcessor(config=llm_config, cost_tracker=cost_tracker, llm_cache=llm_cache)
+        
+        mock_completion.return_value = mock_litellm_response
+        mock_cost.return_value = 0.001
+        processed = ProcessedEntry.from_collected(sample_entry)
+        processor.process(processed)
+        
+        # Check that api_base was passed to litellm
+        assert mock_completion.called
+        call_args = mock_completion.call_args
+        assert call_args is not None
+        assert "api_base" in call_args.kwargs
+        assert call_args.kwargs["api_base"] == "http://localhost:1234/v1"
 
 
 @patch("src.processors.llm_processor.completion")
@@ -237,24 +239,29 @@ def test_llm_processor_base_url_from_env(mock_cost, mock_completion, llm_config,
 
 @patch("src.processors.llm_processor.completion")
 @patch("src.processors.llm_processor.cost_per_token")
-def test_llm_processor_no_base_url(mock_cost, mock_completion, llm_processor, sample_entry, mock_litellm_response):
+def test_llm_processor_no_base_url(mock_cost, mock_completion, llm_config, cost_tracker, llm_cache, sample_entry, mock_litellm_response):
     """Test LLM processor without base_url uses provider default."""
-    mock_completion.return_value = mock_litellm_response
-    mock_cost.return_value = 0.001
-    
-    # Create processed entry with topics/priority to ensure it goes through LLM
-    processed = ProcessedEntry.from_collected(sample_entry)
-    processed.topics = ["AI"]
-    processed.priority = "High"
-    
-    llm_processor.process(processed)
-    
-    # Check that api_base was not passed (None means use default)
-    assert mock_completion.called, "completion should have been called"
-    call_args = mock_completion.call_args
-    assert call_args is not None
-    # If base_url is None, it should not be in kwargs
-    assert "api_base" not in call_args.kwargs or call_args.kwargs.get("api_base") is None
+    # Clear env var and config base_url
+    with patch.dict(os.environ, {"LLM_BASE_URL": ""}, clear=False):
+        llm_config.pop("base_url", None)
+        processor = LLMProcessor(config=llm_config, cost_tracker=cost_tracker, llm_cache=llm_cache)
+        
+        mock_completion.return_value = mock_litellm_response
+        mock_cost.return_value = 0.001
+        
+        # Create processed entry with topics/priority to ensure it goes through LLM
+        processed = ProcessedEntry.from_collected(sample_entry)
+        processed.topics = ["AI"]
+        processed.priority = "High"
+        
+        processor.process(processed)
+        
+        # Check that api_base was not passed (None means use default)
+        assert mock_completion.called, "completion should have been called"
+        call_args = mock_completion.call_args
+        assert call_args is not None
+        # If base_url is None, it should not be in kwargs
+        assert "api_base" not in call_args.kwargs or call_args.kwargs.get("api_base") is None
 
 
 @patch("src.processors.llm_processor.completion")
@@ -293,9 +300,11 @@ def test_llm_processor_get_processor_name(llm_processor):
 @patch("src.processors.llm_processor.cost_per_token")
 def test_llm_processor_base_url_empty_string(mock_cost, mock_completion, llm_config, cost_tracker, llm_cache):
     """Test LLM processor handles empty string base_url."""
-    llm_config["base_url"] = ""
-    processor = LLMProcessor(config=llm_config, cost_tracker=cost_tracker, llm_cache=llm_cache)
-    assert processor.base_url is None
+    # Clear env var to ensure config is used
+    with patch.dict(os.environ, {"LLM_BASE_URL": ""}, clear=False):
+        llm_config["base_url"] = ""
+        processor = LLMProcessor(config=llm_config, cost_tracker=cost_tracker, llm_cache=llm_cache)
+        assert processor.base_url is None
 
 
 @patch("src.processors.llm_processor.completion")

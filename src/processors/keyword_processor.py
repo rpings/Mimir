@@ -7,36 +7,50 @@ from typing import Any
 from src.collectors.base_collector import CollectedEntry
 from src.processors.base_processor import BaseProcessor, ProcessedEntry
 from src.processors.content_cleaner import normalize_text
+from src.processors.processing_context import ProcessingContext
 from src.utils.logger import get_logger
 
 
 class KeywordProcessor(BaseProcessor):
     """Processes content using keyword-based classification."""
 
-    def __init__(self, rules: dict[str, Any]):
+    def __init__(self, rules: dict[str, Any], config: dict[str, Any] | None = None):
         """Initialize keyword processor.
 
         Args:
             rules: Classification rules dictionary with:
                 - topics: dict[str, list[str]] (topic name -> keyword list)
                 - priority: dict[str, list[str]] (priority level -> keyword list)
+            config: Optional processor configuration.
         """
+        super().__init__(config)
         self.rules = rules
         self.topic_rules = rules.get("topics", {})
         self.priority_rules = rules.get("priority", {})
         self.logger = get_logger(__name__)
 
-    def process(self, entry: CollectedEntry) -> ProcessedEntry:
+    def process(
+        self,
+        entry: CollectedEntry | ProcessedEntry,
+        context: ProcessingContext | None = None,
+    ) -> ProcessedEntry | None:
         """Process entry using keyword-based classification.
 
         Args:
-            entry: CollectedEntry with title, summary, and link.
+            entry: CollectedEntry or ProcessedEntry with title, summary, and link.
+            context: Optional processing context (not used in keyword processor).
 
         Returns:
             ProcessedEntry with topics and priority assigned.
         """
-        title = entry.title
-        summary = entry.summary or ""
+        # Convert to ProcessedEntry if needed
+        if isinstance(entry, ProcessedEntry):
+            processed = entry
+        else:
+            processed = ProcessedEntry.from_collected(entry)
+
+        title = processed.title
+        summary = processed.summary or ""
 
         # Classify topics
         topics = self._label_topics(title, summary)
@@ -45,14 +59,13 @@ class KeywordProcessor(BaseProcessor):
         priority = self._guess_priority(title, summary)
 
         # Fallback for arXiv feeds
-        if not topics and "arxiv" in str(entry.link).lower():
+        if not topics and "arxiv" in str(processed.link).lower():
             if "retriev" in (title + summary).lower():
                 topics = ["RAG"]
             else:
                 topics = ["Agent"]
 
-        # Create ProcessedEntry from CollectedEntry
-        processed = ProcessedEntry.from_collected(entry)
+        # Update processed entry
         processed.topics = topics
         processed.priority = priority
         processed.processing_method = "keyword"

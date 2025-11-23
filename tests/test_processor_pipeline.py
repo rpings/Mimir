@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 """Tests for processor pipeline."""
 
+from unittest.mock import Mock
+
 import pytest
 
 from src.collectors.base_collector import CollectedEntry
-from src.processors.base_processor import ProcessedEntry
+from src.processors.base_processor import BaseProcessor, ProcessedEntry
 from src.processors.keyword_processor import KeywordProcessor
-from src.processors.processor_pipeline import ProcessorPipeline
+from src.processors.processor_pipeline import ProcessorPipeline, SkipMarker
+from src.processors.processing_context import ProcessingContext
 
 pytest_plugins = ("pytest_asyncio",)
 
@@ -93,4 +96,98 @@ async def test_processor_pipeline_async(keyword_processor):
     result = await pipeline.aprocess(entry)
     assert isinstance(result, ProcessedEntry)
     assert "AI" in result.topics
+
+
+def test_processor_pipeline_with_context(keyword_processor):
+    """Test pipeline with processing context."""
+    context = ProcessingContext(config={"test": "value"})
+    pipeline = ProcessorPipeline(processors=[keyword_processor], context=context)
+    
+    entry = CollectedEntry(
+        title="Test",
+        link="https://example.com",
+        summary="Test summary",
+    )
+    
+    result = pipeline.process(entry)
+    assert isinstance(result, ProcessedEntry)
+
+
+def test_processor_pipeline_skip_mechanism():
+    """Test pipeline skip mechanism."""
+    class SkippingProcessor(BaseProcessor):
+        def process(self, entry, context=None):
+            return None  # Skip
+        
+        def get_processor_name(self):
+            return "SkippingProcessor"
+    
+    processor = SkippingProcessor()
+    pipeline = ProcessorPipeline(processors=[processor])
+    
+    entry = CollectedEntry(
+        title="Test",
+        link="https://example.com",
+        summary="Test",
+    )
+    
+    result = pipeline.process(entry)
+    assert result is None
+
+
+def test_processor_pipeline_disabled_processor(keyword_processor):
+    """Test pipeline with disabled processor."""
+    disabled_processor = KeywordProcessor(rules={}, config={"enabled": False})
+    pipeline = ProcessorPipeline(processors=[disabled_processor, keyword_processor])
+    
+    entry = CollectedEntry(
+        title="Test",
+        link="https://example.com",
+        summary="Test",
+    )
+    
+    result = pipeline.process(entry)
+    assert isinstance(result, ProcessedEntry)
+
+
+def test_skip_marker():
+    """Test SkipMarker class."""
+    entry = CollectedEntry(
+        title="Test",
+        link="https://example.com",
+        summary="Test",
+    )
+    
+    marker = SkipMarker(entry)
+    assert marker.entry == entry
+
+
+def test_processor_pipeline_error_recovery():
+    """Test pipeline error recovery."""
+    class FailingProcessor(BaseProcessor):
+        def process(self, entry, context=None):
+            raise ValueError("Test error")
+        
+        def get_processor_name(self):
+            return "FailingProcessor"
+    
+    class PassingProcessor(BaseProcessor):
+        def process(self, entry, context=None):
+            return ProcessedEntry.from_collected(entry)
+        
+        def get_processor_name(self):
+            return "PassingProcessor"
+    
+    # Pipeline should continue even if one processor fails
+    pipeline = ProcessorPipeline(processors=[FailingProcessor(), PassingProcessor()])
+    
+    entry = CollectedEntry(
+        title="Test",
+        link="https://example.com",
+        summary="Test",
+    )
+    
+    result = pipeline.process(entry)
+    # Should still process through passing processor
+    assert isinstance(result, ProcessedEntry)
 

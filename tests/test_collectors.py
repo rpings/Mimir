@@ -43,10 +43,23 @@ def test_rss_collector_init(sample_feed_config):
     assert collector.feed_config == sample_feed_config
 
 
-def test_rss_collector_collect_success(sample_feed_config, mock_feedparser):
+@patch("src.collectors.rss_collector.httpx.Client")
+def test_rss_collector_collect_success(mock_client_class, sample_feed_config, mock_feedparser):
     """Test successful RSS feed collection."""
     from src.collectors.base_collector import CollectedEntry
-
+    
+    # Mock httpx response
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.text = "<rss><channel><item><title>Test Article</title><link>https://example.com/article</link></item></channel></rss>"
+    mock_response.raise_for_status = Mock()
+    
+    mock_client = Mock()
+    mock_client.__enter__ = Mock(return_value=mock_client)
+    mock_client.__exit__ = Mock(return_value=None)
+    mock_client.get.return_value = mock_response
+    mock_client_class.return_value = mock_client
+    
     collector = RSSCollector(feed_config=sample_feed_config)
     entries = collector.collect()
 
@@ -64,8 +77,21 @@ def test_rss_collector_missing_url():
         collector.collect()
 
 
-def test_rss_collector_bozo_warning(sample_feed_config):
+@patch("src.collectors.rss_collector.httpx.Client")
+def test_rss_collector_bozo_warning(mock_client_class, sample_feed_config):
     """Test RSS collector handles parsing warnings."""
+    # Mock httpx response
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.text = "<rss><channel><item><title>Test</title><link>https://example.com</link></item></channel></rss>"
+    mock_response.raise_for_status = Mock()
+    
+    mock_client = Mock()
+    mock_client.__enter__ = Mock(return_value=mock_client)
+    mock_client.__exit__ = Mock(return_value=None)
+    mock_client.get.return_value = mock_response
+    mock_client_class.return_value = mock_client
+    
     with patch("src.collectors.rss_collector.feedparser") as mock:
         mock_feed = Mock()
         mock_feed.bozo = True
@@ -84,8 +110,21 @@ def test_rss_collector_bozo_warning(sample_feed_config):
         assert len(entries) > 0  # Should still process entries
 
 
-def test_rss_collector_empty_entries(sample_feed_config):
+@patch("src.collectors.rss_collector.httpx.Client")
+def test_rss_collector_empty_entries(mock_client_class, sample_feed_config):
     """Test RSS collector with empty feed."""
+    # Mock httpx response
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.text = "<rss><channel></channel></rss>"
+    mock_response.raise_for_status = Mock()
+    
+    mock_client = Mock()
+    mock_client.__enter__ = Mock(return_value=mock_client)
+    mock_client.__exit__ = Mock(return_value=None)
+    mock_client.get.return_value = mock_response
+    mock_client_class.return_value = mock_client
+    
     with patch("src.collectors.rss_collector.feedparser") as mock:
         mock_feed = Mock()
         mock_feed.bozo = False
@@ -97,8 +136,21 @@ def test_rss_collector_empty_entries(sample_feed_config):
         assert entries == []
 
 
-def test_rss_collector_entry_without_link(sample_feed_config):
+@patch("src.collectors.rss_collector.httpx.Client")
+def test_rss_collector_entry_without_link(mock_client_class, sample_feed_config):
     """Test RSS collector skips entries without link."""
+    # Mock httpx response
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.text = "<rss><channel><item><title>No Link</title></item><item><title>With Link</title><link>https://example.com</link></item></channel></rss>"
+    mock_response.raise_for_status = Mock()
+    
+    mock_client = Mock()
+    mock_client.__enter__ = Mock(return_value=mock_client)
+    mock_client.__exit__ = Mock(return_value=None)
+    mock_client.get.return_value = mock_response
+    mock_client_class.return_value = mock_client
+    
     with patch("src.collectors.rss_collector.feedparser") as mock:
         mock_feed = Mock()
         mock_feed.bozo = False
@@ -119,8 +171,21 @@ def test_rss_collector_entry_without_link(sample_feed_config):
         assert str(entries[0].link).rstrip("/") == "https://example.com"
 
 
-def test_rss_collector_date_parsing_exceptions(sample_feed_config):
+@patch("src.collectors.rss_collector.httpx.Client")
+def test_rss_collector_date_parsing_exceptions(mock_client_class, sample_feed_config):
     """Test RSS collector date parsing with various exceptions."""
+    # Mock httpx response
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.text = "<rss><channel><item><title>Test</title><link>https://example.com</link><pubDate>2024-01-01T00:00:00Z</pubDate></item></channel></rss>"
+    mock_response.raise_for_status = Mock()
+    
+    mock_client = Mock()
+    mock_client.__enter__ = Mock(return_value=mock_client)
+    mock_client.__exit__ = Mock(return_value=None)
+    mock_client.get.return_value = mock_response
+    mock_client_class.return_value = mock_client
+    
     with patch("src.collectors.rss_collector.feedparser") as mock:
         from time import struct_time
         mock_feed = Mock()
@@ -142,8 +207,21 @@ def test_rss_collector_date_parsing_exceptions(sample_feed_config):
         assert entries[0].published is not None
 
 
-def test_rss_collector_max_entries(sample_feed_config):
+@patch("src.collectors.rss_collector.httpx.Client")
+def test_rss_collector_max_entries(mock_client_class, sample_feed_config):
     """Test RSS collector respects max_entries limit."""
+    # Mock httpx response
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.text = "<rss><channel>" + "".join([f"<item><title>Article {i}</title><link>https://example.com/{i}</link></item>" for i in range(50)]) + "</channel></rss>"
+    mock_response.raise_for_status = Mock()
+    
+    mock_client = Mock()
+    mock_client.__enter__ = Mock(return_value=mock_client)
+    mock_client.__exit__ = Mock(return_value=None)
+    mock_client.get.return_value = mock_response
+    mock_client_class.return_value = mock_client
+    
     with patch("src.collectors.rss_collector.feedparser") as mock:
         mock_feed = Mock()
         mock_feed.bozo = False
@@ -162,14 +240,21 @@ def test_rss_collector_max_entries(sample_feed_config):
         assert len(entries) == 10
 
 
-def test_rss_collector_connection_error(sample_feed_config):
+@patch("src.collectors.rss_collector.httpx.Client")
+def test_rss_collector_connection_error(mock_client_class, sample_feed_config):
     """Test RSS collector handles connection errors."""
-    with patch("src.collectors.rss_collector.feedparser") as mock:
-        mock.parse.side_effect = ConnectionError("Connection failed")
+    import httpx
+    
+    # Mock client to raise ConnectError
+    mock_client = Mock()
+    mock_client.__enter__ = Mock(return_value=mock_client)
+    mock_client.__exit__ = Mock(return_value=None)
+    mock_client.get.side_effect = httpx.ConnectError("Connection failed")
+    mock_client_class.return_value = mock_client
 
-        collector = RSSCollector(feed_config=sample_feed_config)
-        with pytest.raises(ValueError, match="Failed to parse RSS feed"):
-            collector.collect()
+    collector = RSSCollector(feed_config=sample_feed_config)
+    with pytest.raises(ValueError, match="Failed to fetch RSS feed"):
+        collector.collect()
 
 
 @pytest.mark.asyncio
