@@ -138,6 +138,11 @@ class YouTubeCollector(BaseCollector):
             summary = re.sub(r"<[^>]+>", "", summary)
             # Clean up whitespace
             summary = re.sub(r"\s+", " ", summary).strip()
+        
+        # Truncate summary if too long (CollectedEntry has max_length=10000)
+        if len(summary) > 10000:
+            summary = summary[:9997] + "..."
+            self.logger.debug(f"Truncated summary from {len(entry.get('summary', ''))} to 10000 chars")
 
         # Parse published date
         published = entry.get("published") or entry.get("updated")

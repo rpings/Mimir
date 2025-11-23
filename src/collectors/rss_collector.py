@@ -137,6 +137,12 @@ class RSSCollector(BaseCollector):
 
         title = entry.get("title", "Untitled")
         summary = entry.get("summary", "")
+        
+        # Truncate summary if too long (CollectedEntry has max_length=10000)
+        if len(summary) > 10000:
+            summary = summary[:9997] + "..."
+            self.logger.debug(f"Truncated summary from {len(entry.get('summary', ''))} to 10000 chars")
+        
         published = entry.get("published") or entry.get("updated")
 
         # Parse date if available
