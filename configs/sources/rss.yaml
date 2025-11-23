@@ -16,21 +16,23 @@ feeds:
     source_type: 论文
 
   # Official Blogs / Labs
+  # Note: OpenAI feeds may return 403 but work with proper User-Agent
   - name: OpenAI Blog
     url: https://openai.com/blog/rss
     source_type: 博客
   - name: OpenAI API Changelog
     url: https://platform.openai.com/docs/changelog/rss.xml
     source_type: 官方文档
-  - name: Google DeepMind Blog
-    url: https://deepmind.google/discover/blog/feed/
-    source_type: 博客
-  - name: Anthropic Blog
-    url: https://www.anthropic.com/blog/feed
-    source_type: 博客
-  - name: Meta AI Blog
-    url: https://ai.meta.com/blog/feed/
-    source_type: 博客
+  # Note: Google DeepMind, Anthropic, and Meta AI no longer provide public RSS feeds
+  # - name: Google DeepMind Blog
+  #   url: https://deepmind.google/discover/blog/rss/
+  #   source_type: 博客
+  # - name: Anthropic Blog
+  #   url: https://www.anthropic.com/api/feeds/blog.xml
+  #   source_type: 博客
+  # - name: Meta AI Blog
+  #   url: https://ai.facebook.com/blog/rss/
+  #   source_type: 博客
   - name: Microsoft Research Blog
     url: https://www.microsoft.com/en-us/research/feed/
     source_type: 博客
@@ -75,10 +77,11 @@ feeds:
   - name: 机器之心
     url: https://www.jiqizhixin.com/rss
     source_type: 新闻
+  # Note: 量子位 may return 403 but works with proper User-Agent
   - name: 量子位
     url: https://www.qbitai.com/feed
     source_type: 新闻
-  # Note: InfoQ AI feed may not be valid RSS format, removed for now
+  # Note: InfoQ AI feed returns HTML, not valid RSS format
   # - name: AI 前线（InfoQ）
   #   url: https://www.infoq.cn/publications/ai/rss
   #   source_type: 新闻
