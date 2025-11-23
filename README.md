@@ -33,6 +33,7 @@ pip install -r requirements.txt
    export NOTION_DATABASE_ID="your_database_id"
    # Optional: LLM features
    export OPENAI_API_KEY="sk-..."
+   export LLM_MODEL="gpt-4o-mini"  # Overrides config, optional
    export LLM_BASE_URL="http://localhost:11434/v1"  # For local models
    ```
 
