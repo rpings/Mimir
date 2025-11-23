@@ -8,6 +8,7 @@ from typing import Any
 import httpx
 
 from src.collectors.base_collector import BaseCollector, CollectedEntry
+from src.processors.content_cleaner import clean_html, extract_summary
 from src.utils.logger import get_logger
 from src.utils.retry_handler import retry_on_connection_error
 
@@ -136,12 +137,26 @@ class RSSCollector(BaseCollector):
             return None
 
         title = entry.get("title", "Untitled")
-        summary = entry.get("summary", "")
+        # Get summary/description from entry
+        # For Atom feeds (like GitHub releases), summary may contain full HTML content
+        raw_summary = entry.get("summary", "") or entry.get("description", "")
         
-        # Truncate summary if too long (CollectedEntry has max_length=10000)
-        if len(summary) > 10000:
-            summary = summary[:9997] + "..."
-            self.logger.debug(f"Truncated summary from {len(entry.get('summary', ''))} to 10000 chars")
+        # Clean HTML and extract meaningful summary
+        if raw_summary:
+            # Clean HTML tags and entities
+            cleaned = clean_html(raw_summary)
+            
+            # Extract summary: first 3 sentences or max 500 chars
+            if len(cleaned) > 500:
+                # Try to extract first few sentences
+                summary = extract_summary(cleaned, max_sentences=3)
+                # If still too long, truncate
+                if len(summary) > 500:
+                    summary = cleaned[:497] + "..."
+            else:
+                summary = cleaned
+        else:
+            summary = ""
         
         published = entry.get("published") or entry.get("updated")
 

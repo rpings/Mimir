@@ -130,19 +130,25 @@ class YouTubeCollector(BaseCollector):
             return None
 
         title = entry.get("title", "Untitled")
-        summary = entry.get("summary", "")
+        raw_summary = entry.get("summary", "") or entry.get("description", "")
         
         # Extract video description from summary (may contain HTML)
-        if summary:
+        if raw_summary:
             # Remove HTML tags
-            summary = re.sub(r"<[^>]+>", "", summary)
+            summary = re.sub(r"<[^>]+>", "", raw_summary)
             # Clean up whitespace
             summary = re.sub(r"\s+", " ", summary).strip()
-        
-        # Truncate summary if too long (CollectedEntry has max_length=10000)
-        if len(summary) > 10000:
-            summary = summary[:9997] + "..."
-            self.logger.debug(f"Truncated summary from {len(entry.get('summary', ''))} to 10000 chars")
+            
+            # Extract summary: first 3 sentences or max 500 chars
+            if len(summary) > 500:
+                # Try to extract first few sentences
+                from src.processors.content_cleaner import extract_summary
+                summary = extract_summary(summary, max_sentences=3)
+                # If still too long, truncate
+                if len(summary) > 500:
+                    summary = summary[:497] + "..."
+        else:
+            summary = ""
 
         # Parse published date
         published = entry.get("published") or entry.get("updated")
