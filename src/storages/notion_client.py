@@ -66,7 +66,7 @@ class NotionStorage(BaseStorage):
             return False
 
         try:
-            # Use request method directly for database query
+            # Use request method - path should not include /v1/ prefix (added automatically)
             response = self.client.request(
                 path=f"databases/{self.database_id}/query",
                 method="POST",
@@ -159,7 +159,7 @@ class NotionStorage(BaseStorage):
             conversion requires parsing Notion page properties.
         """
         try:
-            # Use request method directly for database query
+            # Use request method - path should not include /v1/ prefix (added automatically)
             body = {}
             if "filter" in kwargs:
                 body["filter"] = kwargs["filter"]
