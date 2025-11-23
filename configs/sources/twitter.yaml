@@ -1,0 +1,17 @@
+# Twitter/X Account Sources Configuration
+
+# Note: Twitter/X API v2 requires authentication.
+# Set TWITTER_BEARER_TOKEN environment variable to enable.
+
+accounts:
+  # AI/ML Accounts
+  - name: OpenAI
+    username: OpenAI
+    source_type: social
+  - name: Anthropic AI
+    username: AnthropicAI
+    source_type: social
+  - name: Google DeepMind
+    username: deepmind
+    source_type: social
+

@@ -109,6 +109,19 @@ class ConfigLoader:
             # YouTube config is optional
             return []
 
+    def get_twitter_accounts(self) -> list[dict[str, str]]:
+        """Get Twitter/X account sources configuration.
+
+        Returns:
+            List of Twitter account configurations.
+        """
+        try:
+            accounts_config = self.load_yaml("sources/twitter.yaml")
+            return accounts_config.get("accounts", [])
+        except FileNotFoundError:
+            # Twitter config is optional
+            return []
+
 
 def load_config(config_dir: str | None = None) -> dict[str, Any]:
     """Convenience function to load main configuration.
