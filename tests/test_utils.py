@@ -106,6 +106,48 @@ def test_config_loader_get_classification_rules(config_dir):
     assert "priority" in rules
 
 
+def test_config_loader_get_youtube_channels(config_dir):
+    """Test getting YouTube channel sources."""
+    channels_file = config_dir / "sources" / "youtube.yaml"
+    channels_file.parent.mkdir()
+    channels_file.write_text("channels:\n  - name: Test Channel\n    channel_id: UCtest123")
+
+    loader = ConfigLoader(config_dir=str(config_dir))
+    channels = loader.get_youtube_channels()
+
+    assert len(channels) == 1
+    assert channels[0]["name"] == "Test Channel"
+    assert channels[0]["channel_id"] == "UCtest123"
+
+
+def test_config_loader_get_youtube_channels_missing_file(config_dir):
+    """Test getting YouTube channels when file doesn't exist."""
+    loader = ConfigLoader(config_dir=str(config_dir))
+    channels = loader.get_youtube_channels()
+    assert channels == []
+
+
+def test_config_loader_get_twitter_accounts(config_dir):
+    """Test getting Twitter account sources."""
+    accounts_file = config_dir / "sources" / "twitter.yaml"
+    accounts_file.parent.mkdir()
+    accounts_file.write_text("accounts:\n  - name: Test Account\n    username: testuser")
+
+    loader = ConfigLoader(config_dir=str(config_dir))
+    accounts = loader.get_twitter_accounts()
+
+    assert len(accounts) == 1
+    assert accounts[0]["name"] == "Test Account"
+    assert accounts[0]["username"] == "testuser"
+
+
+def test_config_loader_get_twitter_accounts_missing_file(config_dir):
+    """Test getting Twitter accounts when file doesn't exist."""
+    loader = ConfigLoader(config_dir=str(config_dir))
+    accounts = loader.get_twitter_accounts()
+    assert accounts == []
+
+
 def test_logger_setup():
     """Test logger setup."""
     # loguru setup_logger returns None, just verify it doesn't raise

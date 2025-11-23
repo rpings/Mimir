@@ -2,7 +2,7 @@
 """Tests for collectors module."""
 
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, AsyncMock
 from datetime import datetime
 
 from src.collectors.rss_collector import RSSCollector
@@ -170,3 +170,64 @@ def test_rss_collector_connection_error(sample_feed_config):
         collector = RSSCollector(feed_config=sample_feed_config)
         with pytest.raises(ValueError, match="Failed to parse RSS feed"):
             collector.collect()
+
+
+@pytest.mark.asyncio
+async def test_rss_collector_acollect_success(sample_feed_config):
+    """Test successful async RSS collection."""
+    with patch("src.collectors.rss_collector.httpx.AsyncClient") as mock_client:
+        # Mock HTTP response
+        mock_response = AsyncMock()
+        mock_response.text = """<?xml version="1.0"?>
+<rss version="2.0">
+  <channel>
+    <item>
+      <title>Test Article</title>
+      <link>https://example.com/article</link>
+      <description>Test summary</description>
+    </item>
+  </channel>
+</rss>"""
+        mock_response.raise_for_status = Mock()
+        
+        mock_client_instance = AsyncMock()
+        mock_client_instance.__aenter__.return_value.get = AsyncMock(return_value=mock_response)
+        mock_client_instance.__aexit__ = AsyncMock(return_value=None)
+        mock_client.return_value = mock_client_instance
+        
+        collector = RSSCollector(feed_config=sample_feed_config)
+        
+        with patch("src.collectors.rss_collector.feedparser") as mock_feedparser:
+            mock_feed = Mock()
+            mock_feed.bozo = False
+            mock_entry = Mock()
+            mock_entry.get = Mock(side_effect=lambda k, d=None: {
+                "title": "Test Article",
+                "link": "https://example.com/article",
+                "summary": "Test summary",
+            }.get(k, d))
+            mock_entry.published_parsed = None
+            mock_feed.entries = [mock_entry]
+            mock_feedparser.parse.return_value = mock_feed
+            
+            entries = await collector.acollect()
+            
+            assert len(entries) == 1
+            assert entries[0].title == "Test Article"
+
+
+@pytest.mark.asyncio
+async def test_rss_collector_acollect_http_error(sample_feed_config):
+    """Test async collection handles HTTP errors."""
+    with patch("src.collectors.rss_collector.httpx.AsyncClient") as mock_client:
+        mock_client_instance = AsyncMock()
+        mock_get = AsyncMock()
+        mock_get.side_effect = Exception("HTTP Error")
+        mock_client_instance.__aenter__.return_value.get = mock_get
+        mock_client_instance.__aexit__ = AsyncMock(return_value=None)
+        mock_client.return_value = mock_client_instance
+        
+        collector = RSSCollector(feed_config=sample_feed_config)
+        
+        with pytest.raises(ValueError, match="Failed to"):
+            await collector.acollect()
