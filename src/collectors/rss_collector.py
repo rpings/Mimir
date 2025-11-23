@@ -49,8 +49,14 @@ class RSSCollector(BaseCollector):
             raise ValueError("Feed URL is required")
 
         try:
-            # Use httpx for async HTTP requests
-            async with httpx.AsyncClient(timeout=30.0) as client:
+            # Use httpx for async HTTP requests with proper headers
+            # Some RSS feeds (e.g., OpenAI) require proper User-Agent and Accept headers
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "application/rss+xml, application/xml, text/xml, application/atom+xml, */*",
+                "Accept-Language": "en-US,en;q=0.9",
+            }
+            async with httpx.AsyncClient(timeout=30.0, headers=headers, follow_redirects=True) as client:
                 response = await client.get(url)
                 response.raise_for_status()
                 feed_content = response.text
