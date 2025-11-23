@@ -48,18 +48,41 @@ pip install --quiet --upgrade pip
 echo -e "${GREEN}Installing dependencies...${NC}"
 pip install --quiet -r requirements.txt
 
-# Check environment variables
+# Check required environment variables
 if [ -z "$NOTION_TOKEN" ] || [ -z "$NOTION_DATABASE_ID" ]; then
     echo -e "${RED}Error: NOTION_TOKEN and NOTION_DATABASE_ID must be set${NC}"
+    echo ""
+    echo "Required environment variables:"
+    echo "  NOTION_TOKEN=your_token"
+    echo "  NOTION_DATABASE_ID=your_database_id"
+    echo ""
+    echo "Optional (for LLM features):"
+    echo "  OPENAI_API_KEY=sk-...          # For OpenAI API"
+    echo "  LLM_BASE_URL=http://...        # For local models or custom APIs"
     echo ""
     echo "You can set them in .env file or export them:"
     echo "  export NOTION_TOKEN=your_token"
     echo "  export NOTION_DATABASE_ID=your_database_id"
+    echo "  export OPENAI_API_KEY=sk-...  # Optional"
+    echo "  export LLM_BASE_URL=http://localhost:11434/v1  # Optional"
     echo ""
     echo "Or create a .env file:"
     echo "  NOTION_TOKEN=your_token"
     echo "  NOTION_DATABASE_ID=your_database_id"
+    echo "  OPENAI_API_KEY=sk-...  # Optional"
+    echo "  LLM_BASE_URL=http://localhost:11434/v1  # Optional"
     exit 1
+fi
+
+# Check optional LLM environment variables
+if [ -n "$OPENAI_API_KEY" ] || [ -n "$LLM_BASE_URL" ]; then
+    echo -e "${GREEN}LLM features detected (API key or base URL set)${NC}"
+    echo "  Make sure to enable LLM in configs/config.yml:"
+    echo "    llm:"
+    echo "      enabled: true"
+else
+    echo -e "${YELLOW}LLM features not configured (using keyword processing only)${NC}"
+    echo "  To enable LLM features, set OPENAI_API_KEY or LLM_BASE_URL"
 fi
 
 # Run Mimir
