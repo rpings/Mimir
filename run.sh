@@ -1,29 +1,83 @@
 #!/bin/bash
-# Simple run script for Mimir
+# Mimir Run Script
+# Supports both sync and async execution modes
+
+set -e  # Exit on error
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Default mode (sync or async)
+MODE="${1:-sync}"
+
+echo -e "${GREEN}Mimir - AI Intelligence Collection System${NC}"
+echo "=========================================="
+
+# Check Python version
+if ! command -v python3 &> /dev/null; then
+    echo -e "${RED}Error: python3 is not installed${NC}"
+    exit 1
+fi
+
+PYTHON_VERSION=$(python3 --version | cut -d' ' -f2 | cut -d'.' -f1,2)
+REQUIRED_VERSION="3.11"
+
+if [ "$(printf '%s\n' "$REQUIRED_VERSION" "$PYTHON_VERSION" | sort -V | head -n1)" != "$REQUIRED_VERSION" ]; then
+    echo -e "${RED}Error: Python 3.11+ required, found $PYTHON_VERSION${NC}"
+    exit 1
+fi
 
 # Check if virtual environment exists
 if [ ! -d "venv" ]; then
-    echo "Creating virtual environment..."
+    echo -e "${YELLOW}Creating virtual environment...${NC}"
     python3 -m venv venv
 fi
 
 # Activate virtual environment
+echo -e "${GREEN}Activating virtual environment...${NC}"
 source venv/bin/activate
 
+# Upgrade pip
+echo -e "${GREEN}Upgrading pip...${NC}"
+pip install --quiet --upgrade pip
+
 # Install dependencies
-echo "Installing dependencies..."
-pip install -r requirements.txt
+echo -e "${GREEN}Installing dependencies...${NC}"
+pip install --quiet -r requirements.txt
 
 # Check environment variables
 if [ -z "$NOTION_TOKEN" ] || [ -z "$NOTION_DATABASE_ID" ]; then
-    echo "Warning: NOTION_TOKEN and NOTION_DATABASE_ID must be set"
+    echo -e "${RED}Error: NOTION_TOKEN and NOTION_DATABASE_ID must be set${NC}"
+    echo ""
     echo "You can set them in .env file or export them:"
     echo "  export NOTION_TOKEN=your_token"
     echo "  export NOTION_DATABASE_ID=your_database_id"
+    echo ""
+    echo "Or create a .env file:"
+    echo "  NOTION_TOKEN=your_token"
+    echo "  NOTION_DATABASE_ID=your_database_id"
     exit 1
 fi
 
 # Run Mimir
-echo "Running Mimir..."
-python main.py
+echo ""
+echo -e "${GREEN}Running Mimir in ${MODE} mode...${NC}"
+echo "=========================================="
+
+if [ "$MODE" = "async" ]; then
+    if [ -f "main_async.py" ]; then
+        python main_async.py
+    else
+        echo -e "${YELLOW}Warning: main_async.py not found, falling back to sync mode${NC}"
+        python main.py
+    fi
+else
+    python main.py
+fi
+
+echo ""
+echo -e "${GREEN}Done!${NC}"
 
