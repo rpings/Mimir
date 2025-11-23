@@ -35,8 +35,7 @@ class NotionStorage(BaseStorage):
                 Defaults to English field names if not provided.
         """
         self.client = Client(auth=token)
-        # Format database ID: remove hyphens if present (Notion API format)
-        self.database_id = database_id.replace("-", "") if database_id else database_id
+        self.database_id = database_id
         self.timezone = pytz.timezone(timezone)
         self.logger = get_logger(__name__)
         
@@ -61,21 +60,31 @@ class NotionStorage(BaseStorage):
 
         Returns:
             True if entry exists, False otherwise.
+            Returns False on error to allow retry, but caller should handle gracefully.
         """
         link = str(entry.link)
         if not link:
             return False
 
         try:
+            # Format database ID: remove hyphens for URL path (Notion API requirement)
+            db_id = self.database_id.replace("-", "")
+            
             # Use request method - path should not include /v1/ prefix (added automatically)
             response = self.client.request(
-                path=f"databases/{self.database_id}/query",
+                path=f"databases/{db_id}/query",
                 method="POST",
                 body={"filter": {"property": self.field_names["link"], "url": {"equals": link}}},
             )
-            return len(response.get("results", [])) > 0
+            results = response.get("results", [])
+            exists = len(results) > 0
+            if exists:
+                self.logger.debug(f"Entry exists in Notion: {link[:50]}...")
+            return exists
         except Exception as e:
-            self.logger.error(f"Failed to query Notion database: {e}")
+            # Log error but return False to allow retry
+            # Caller should handle this gracefully (e.g., try save and catch duplicate error)
+            self.logger.warning(f"Failed to query Notion database for existence check: {e}")
             return False
 
     @retry_on_connection_error(max_attempts=3)
@@ -132,13 +141,22 @@ class NotionStorage(BaseStorage):
                 }
 
             # Create page
-            self.client.pages.create(
-                parent={"database_id": self.database_id},
-                properties=properties,
-            )
-
-            self.logger.info(f"Saved entry to Notion: {title[:50]}...")
-            return True
+            # Note: Notion API will return error if duplicate, but we check exists() first
+            try:
+                self.client.pages.create(
+                    parent={"database_id": self.database_id},
+                    properties=properties,
+                )
+                self.logger.info(f"Saved entry to Notion: {title[:50]}...")
+                return True
+            except Exception as create_error:
+                # Check if it's a duplicate error (Notion may return specific error codes)
+                error_str = str(create_error).lower()
+                if "duplicate" in error_str or "already exists" in error_str:
+                    self.logger.warning(f"Entry already exists in Notion (duplicate): {title[:50]}...")
+                    return False  # Not saved, but not an error
+                # Re-raise other errors
+                raise
 
         except Exception as e:
             self.logger.error(f"Failed to save entry to Notion: {e}")
