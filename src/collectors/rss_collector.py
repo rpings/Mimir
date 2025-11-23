@@ -109,7 +109,19 @@ class RSSCollector(BaseCollector):
         self.logger.info(f"Fetching RSS feed: {self.feed_config.get('name', url)}")
 
         try:
-            feed = feedparser.parse(url)
+            # Use httpx to fetch with proper headers, then parse
+            # feedparser.parse(url) uses urllib which may not have proper headers
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "application/rss+xml, application/xml, text/xml, application/atom+xml, */*",
+                "Accept-Language": "en-US,en;q=0.9",
+            }
+            with httpx.Client(timeout=30.0, headers=headers, follow_redirects=True) as client:
+                response = client.get(url)
+                response.raise_for_status()
+                feed_content = response.text
+            
+            feed = feedparser.parse(feed_content)
 
             # Check for parsing errors
             if feed.bozo:
@@ -125,6 +137,9 @@ class RSSCollector(BaseCollector):
             self.logger.info(f"Collected {len(entries)} entries from {self.feed_config.get('name', url)}")
             return entries
 
+        except httpx.HTTPError as e:
+            self.logger.error(f"HTTP error fetching RSS feed {url}: {e}")
+            raise ValueError(f"Failed to fetch RSS feed: {e}") from e
         except Exception as e:
             self.logger.error(f"Failed to collect from RSS feed {url}: {e}")
             raise ValueError(f"Failed to parse RSS feed: {e}") from e
