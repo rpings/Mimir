@@ -17,11 +17,12 @@ Mimir automatically collects information from multiple sources (RSS feeds, and l
 - ✅ Notion integration
 - ✅ Zero cost (GitHub Actions free tier)
 
-### Phase 2 (LLM Enhancement) - Planned
-- 🔄 LLM-powered content summarization
-- 🔄 Intelligent translation
-- 🔄 Smart categorization
-- 🔄 Cost monitoring and budget controls
+### Phase 2 (LLM Enhancement) - Available
+- ✅ LLM-powered content summarization
+- ✅ Intelligent translation
+- ✅ Smart categorization
+- ✅ Cost monitoring and budget controls
+- ✅ Custom Base URL support (for local models, proxies, OpenAI-compatible APIs)
 
 ### Phase 3 (Optimization) - Future
 - 📋 Performance optimization
@@ -57,6 +58,8 @@ pip install -r requirements.txt
 4. Set up GitHub Actions secrets:
    - `NOTION_TOKEN`: Your Notion integration token
    - `NOTION_DATABASE_ID`: Your Notion database ID
+   - `OPENAI_API_KEY`: Your OpenAI API key (if using LLM features with OpenAI)
+   - `LLM_BASE_URL`: Optional custom API base URL (overrides config, for local models/proxies)
 
 5. Configure RSS sources:
    - Edit `configs/sources/rss.yaml` to add your RSS feeds
@@ -76,7 +79,7 @@ timezone: Asia/Shanghai
 notion:
   database_id: ${NOTION_DATABASE_ID}
 processing:
-  enable_llm: false  # Phase 1: false, Phase 2: optional
+  enable_llm: false  # Deprecated: use llm.enabled instead
   enable_keyword_classification: true
   deduplication:
     method: url
@@ -87,6 +90,25 @@ cache:
 retry:
   max_attempts: 3
   backoff_factor: 2
+
+# LLM Configuration (Phase 2)
+llm:
+  enabled: false  # Must be explicitly enabled
+  provider: openai  # openai, anthropic, etc.
+  model: gpt-4o-mini  # Model name (recommended for cost efficiency)
+  base_url: null  # Optional: Custom API base URL
+  # Examples:
+  # base_url: "https://api.openai.com/v1"  # Default OpenAI endpoint
+  # base_url: "http://localhost:1234/v1"  # Local model server (Ollama, vLLM, etc.)
+  # base_url: "https://api.example.com/v1"  # Custom proxy or compatible API
+  daily_limit: 5.0  # USD per day
+  monthly_budget: 50.0  # USD per month
+  features:
+    summarization: true  # Generate LLM summaries
+    translation: true  # Translate content
+    smart_categorization: true  # Use LLM for topic/priority classification
+  translation:
+    target_languages: ["zh", "en"]  # Optional translation targets
 ```
 
 ### RSS Sources (`configs/sources/rss.yaml`)
@@ -142,8 +164,54 @@ python main.py
 
 ### Phase 2 (With LLM)
 - **Estimated Cost**: $30-150/month (depending on usage)
-- **Controls**: Daily limits, monthly budget, caching
-- **Default**: LLM features disabled by default
+  - GPT-4o-mini: ~$0.15 per 1M input tokens, ~$0.6 per 1M output tokens
+  - Typical article: ~500-2000 tokens per feature (summary/translation/categorization)
+- **Controls**: 
+  - Daily limits (default: $5/day)
+  - Monthly budget (default: $50/month)
+  - Automatic cost tracking and persistence
+  - Budget enforcement before API calls
+- **Default**: LLM features disabled by default (`llm.enabled: false`)
+- **Local Models**: Use `base_url` to point to local model servers (Ollama, vLLM) for $0 cost
+
+## LLM Setup
+
+### Using OpenAI (Default)
+
+1. Get your OpenAI API key from https://platform.openai.com/api-keys
+2. Set environment variable:
+   ```bash
+   export OPENAI_API_KEY="sk-..."
+   ```
+3. Enable LLM in `configs/config.yml`:
+   ```yaml
+   llm:
+     enabled: true
+     provider: openai
+     model: gpt-4o-mini
+   ```
+
+### Using Local Models (Ollama, vLLM, etc.)
+
+1. Start your local model server (e.g., Ollama on `http://localhost:11434`)
+2. Configure base URL in `configs/config.yml`:
+   ```yaml
+   llm:
+     enabled: true
+     provider: openai  # Use 'openai' for OpenAI-compatible APIs
+     model: llama3  # Your local model name
+     base_url: "http://localhost:11434/v1"  # Your local server endpoint
+   ```
+   Or use environment variable:
+   ```bash
+   export LLM_BASE_URL="http://localhost:11434/v1"
+   ```
+
+### Using Custom Proxies or Compatible APIs
+
+Set `base_url` in config or `LLM_BASE_URL` environment variable to point to any OpenAI-compatible API endpoint.
+
+**Priority**: `LLM_BASE_URL` env var > config `base_url` > provider default
 
 ## License
 

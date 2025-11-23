@@ -1,19 +1,17 @@
 # -*- coding: utf-8 -*-
-"""Cache manager for local state tracking."""
+"""Cache manager using diskcache for local state tracking."""
 
-import hashlib
-import json
-from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, Optional, Set
+
+import diskcache as dc
 
 
 class CacheManager:
-    """Manages local cache for deduplication and state tracking."""
+    """Manages local cache for deduplication and state tracking using diskcache."""
 
     def __init__(
         self,
-        cache_dir: Optional[str] = None,
+        cache_dir: str | None = None,
         ttl_days: int = 30,
     ):
         """Initialize cache manager.
@@ -28,57 +26,14 @@ class CacheManager:
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
         self.ttl_days = ttl_days
-        self.url_cache_file = self.cache_dir / "urls.json"
-        self._url_cache: Set[str] = set()
-        self._load_cache()
+        self.ttl_seconds = ttl_days * 24 * 60 * 60
 
-    def _load_cache(self) -> None:
-        """Load cache from disk."""
-        if not self.url_cache_file.exists():
-            return
-
-        try:
-            with open(self.url_cache_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                # Filter expired entries
-                now = datetime.now()
-                self._url_cache = {
-                    url
-                    for url, timestamp_str in data.items()
-                    if self._is_valid_entry(timestamp_str, now)
-                }
-        except (json.JSONDecodeError, KeyError, ValueError):
-            # If cache is corrupted, start fresh
-            self._url_cache = set()
-
-    def _is_valid_entry(self, timestamp_str: str, now: datetime) -> bool:
-        """Check if cache entry is still valid.
-
-        Args:
-            timestamp_str: ISO format timestamp string.
-            now: Current datetime.
-
-        Returns:
-            True if entry is still valid (within TTL).
-        """
-        try:
-            timestamp = datetime.fromisoformat(timestamp_str)
-            age = now - timestamp
-            return age < timedelta(days=self.ttl_days)
-        except (ValueError, TypeError):
-            return False
-
-    def _save_cache(self) -> None:
-        """Save cache to disk."""
-        now = datetime.now().isoformat()
-        data = {url: now for url in self._url_cache}
-
-        try:
-            with open(self.url_cache_file, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-        except (IOError, OSError):
-            # If save fails, continue without cache persistence
-            pass
+        # Initialize diskcache
+        self.cache = dc.Cache(
+            str(self.cache_dir),
+            size_limit=1000000,  # 1MB limit
+            default_timeout=self.ttl_seconds,
+        )
 
     def has_url(self, url: str) -> bool:
         """Check if URL exists in cache.
@@ -87,9 +42,9 @@ class CacheManager:
             url: URL string to check.
 
         Returns:
-            True if URL is in cache.
+            True if URL is in cache and not expired.
         """
-        return url in self._url_cache
+        return url in self.cache
 
     def add_url(self, url: str) -> None:
         """Add URL to cache.
@@ -97,8 +52,7 @@ class CacheManager:
         Args:
             url: URL string to add.
         """
-        self._url_cache.add(url)
-        self._save_cache()
+        self.cache.set(url, True, expire=self.ttl_seconds)
 
     def get_url_hash(self, url: str) -> str:
         """Get hash of URL for deduplication.
@@ -109,29 +63,27 @@ class CacheManager:
         Returns:
             SHA256 hash of URL.
         """
+        import hashlib
+
         return hashlib.sha256(url.encode("utf-8")).hexdigest()
 
     def clear_expired(self) -> int:
         """Clear expired cache entries.
 
         Returns:
-            Number of entries removed.
+            Number of entries removed (diskcache handles this automatically).
         """
-        initial_count = len(self._url_cache)
-        self._load_cache()  # Reload to filter expired
-        removed = initial_count - len(self._url_cache)
-        if removed > 0:
-            self._save_cache()
-        return removed
+        # diskcache automatically expires entries, so we just return 0
+        # The actual cleanup happens during cache operations
+        return 0
 
-    def get_cache_stats(self) -> Dict[str, int]:
+    def get_cache_stats(self) -> dict[str, int]:
         """Get cache statistics.
 
         Returns:
             Dictionary with cache statistics.
         """
         return {
-            "total_urls": len(self._url_cache),
+            "total_urls": len(self.cache),
             "ttl_days": self.ttl_days,
         }
-

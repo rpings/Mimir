@@ -2,18 +2,21 @@
 """Base storage interface."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any
+
+from src.collectors.base_collector import CollectedEntry
+from src.processors.base_processor import ProcessedEntry
 
 
 class BaseStorage(ABC):
     """Abstract base class for data storage."""
 
     @abstractmethod
-    def exists(self, entry: Dict[str, Any]) -> bool:
+    def exists(self, entry: CollectedEntry | ProcessedEntry) -> bool:
         """Check if entry already exists in storage.
 
         Args:
-            entry: Entry dictionary with at least 'link' field.
+            entry: Entry with at least 'link' field (CollectedEntry or ProcessedEntry).
 
         Returns:
             True if entry exists, False otherwise.
@@ -21,17 +24,17 @@ class BaseStorage(ABC):
         pass
 
     @abstractmethod
-    def save(self, entry: Dict[str, Any]) -> bool:
+    def save(self, entry: ProcessedEntry) -> bool:
         """Save entry to storage.
 
         Args:
-            entry: Processed entry dictionary with required fields:
+            entry: ProcessedEntry with required fields:
                 - title: str
-                - link: str
-                - source_type: str
-                - topics: List[str]
+                - link: HttpUrl
+                - source_type: str | None
+                - topics: list[str]
                 - priority: str
-                - date: str (ISO format date string)
+                - published: str | None (ISO format date string)
 
         Returns:
             True if saved successfully, False otherwise.
@@ -43,14 +46,14 @@ class BaseStorage(ABC):
         pass
 
     @abstractmethod
-    def query(self, **kwargs: Any) -> list[Dict[str, Any]]:
+    def query(self, **kwargs: Any) -> list[ProcessedEntry]:
         """Query entries from storage.
 
         Args:
             **kwargs: Query parameters (implementation-specific).
 
         Returns:
-            List of matching entries.
+            List of matching ProcessedEntry instances.
         """
         pass
 

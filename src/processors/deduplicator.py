@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Deduplication logic."""
 
-from typing import Dict, Any
-
+from src.collectors.base_collector import CollectedEntry
+from src.processors.base_processor import ProcessedEntry
 from src.storages.base_storage import BaseStorage
 from src.storages.cache_manager import CacheManager
 
@@ -24,16 +24,16 @@ class Deduplicator:
         self.storage = storage
         self.cache_manager = cache_manager
 
-    def is_duplicate(self, entry: Dict[str, Any]) -> bool:
+    def is_duplicate(self, entry: CollectedEntry | ProcessedEntry) -> bool:
         """Check if entry is a duplicate.
 
         Args:
-            entry: Entry dictionary with at least 'link' field.
+            entry: Entry with link field (CollectedEntry or ProcessedEntry).
 
         Returns:
             True if entry is a duplicate, False otherwise.
         """
-        link = entry.get("link")
+        link = str(entry.link)
         if not link:
             return False
 
@@ -49,13 +49,13 @@ class Deduplicator:
 
         return False
 
-    def mark_as_processed(self, entry: Dict[str, Any]) -> None:
+    def mark_as_processed(self, entry: CollectedEntry | ProcessedEntry) -> None:
         """Mark entry as processed (add to cache).
 
         Args:
-            entry: Entry dictionary with at least 'link' field.
+            entry: Entry with link field (CollectedEntry or ProcessedEntry).
         """
-        link = entry.get("link")
+        link = str(entry.link)
         if link:
             self.cache_manager.add_url(link)
 

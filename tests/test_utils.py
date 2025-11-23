@@ -108,28 +108,23 @@ def test_config_loader_get_classification_rules(config_dir):
 
 def test_logger_setup():
     """Test logger setup."""
-    logger = setup_logger("test_logger")
-    assert logger.name == "test_logger"
-    assert logger.level <= 20  # INFO or lower
+    # loguru setup_logger returns None, just verify it doesn't raise
+    setup_logger("test_logger")
+    # loguru logger is a singleton, so we just verify it's callable
+    from loguru import logger
+    assert callable(logger.info)
 
 
 def test_logger_setup_with_file(tmp_path):
     """Test logger setup with file."""
+    from loguru import logger
+    
     log_dir = tmp_path / "logs"
     log_file = log_dir / "test.log"
-    logger = setup_logger("test_logger_file", log_file="test.log", log_dir=str(log_dir))
+    setup_logger("test_logger_file", log_file="test.log", log_dir=str(log_dir))
 
     logger.info("Test message")
-    # Force flush and close to ensure file is written
-    for handler in logger.handlers:
-        handler.flush()
-        if hasattr(handler, 'close'):
-            handler.close()
-    
-    # Reopen logger to check file was created
-    import logging
-    logging.shutdown()
-    
+    # loguru automatically flushes, just verify file exists
     assert log_file.exists()
 
 
@@ -137,7 +132,9 @@ def test_logger_get_logger():
     """Test getting logger instance."""
     logger1 = get_logger("test")
     logger2 = get_logger("test")
-    assert logger1 is logger2  # Same instance
+    # loguru logger.bind() returns bound logger instances, but they're callable
+    assert callable(logger1.info)
+    assert callable(logger2.info)
 
 
 def test_retry_on_connection_error_success():

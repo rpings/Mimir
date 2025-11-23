@@ -5,25 +5,29 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict
+
+from loguru import logger
 
 from src.collectors.rss_collector import RSSCollector
 from src.processors.deduplicator import Deduplicator
 from src.processors.keyword_processor import KeywordProcessor
+from src.processors.llm_processor import LLMProcessor
+from src.processors.processor_pipeline import ProcessorPipeline
 from src.storages.cache_manager import CacheManager
 from src.storages.notion_client import NotionStorage
 from src.utils.config_loader import ConfigLoader
+from src.utils.cost_tracker import BudgetExceededError, CostTracker
 from src.utils.logger import setup_logger
 
 
-def main() -> Dict[str, int]:
+def main() -> dict[str, int]:
     """Main execution function.
 
     Returns:
         Dictionary with statistics: {"created": int, "skipped": int, "errors": int}
     """
     # Setup logging
-    logger = setup_logger(__name__, log_file="mimir.log")
+    setup_logger(__name__, log_file="mimir.log")
 
     try:
         # Load configuration
@@ -45,10 +49,13 @@ def main() -> Dict[str, int]:
             logger.error("NOTION_TOKEN and NOTION_DATABASE_ID must be set")
             sys.exit(1)
 
+        notion_config = config.get("notion", {})
+        field_names = notion_config.get("field_names")
         storage = NotionStorage(
             token=notion_token,
             database_id=notion_db_id,
             timezone=config.get("timezone", "Asia/Shanghai"),
+            field_names=field_names,
         )
 
         deduplicator = Deduplicator(
@@ -56,7 +63,32 @@ def main() -> Dict[str, int]:
             cache_manager=cache_manager,
         )
 
-        processor = KeywordProcessor(rules=rules)
+        # Initialize cost tracker for LLM budget management
+        llm_config = config.get("llm", {})
+        cost_tracker = CostTracker(
+            daily_limit=llm_config.get("daily_limit", 5.0),
+            monthly_budget=llm_config.get("monthly_budget", 50.0),
+        )
+
+        # Create processor pipeline using LangChain
+        keyword_processor = KeywordProcessor(rules=rules)
+        processors = [keyword_processor]
+
+        # Add LLMProcessor if enabled
+        if llm_config.get("enabled", False):
+            try:
+                llm_processor = LLMProcessor(
+                    config=llm_config,
+                    cost_tracker=cost_tracker,
+                )
+                processors.append(llm_processor)
+                logger.info("LLM processing enabled")
+            except Exception as e:
+                logger.warning(f"Failed to initialize LLMProcessor: {e}, continuing without LLM")
+        else:
+            logger.debug("LLM processing disabled")
+
+        pipeline = ProcessorPipeline(processors=processors)
 
         # Statistics
         stats = {"created": 0, "skipped": 0, "errors": 0}
@@ -78,19 +110,25 @@ def main() -> Dict[str, int]:
                         # Check for duplicates
                         if deduplicator.is_duplicate(entry):
                             stats["skipped"] += 1
-                            logger.debug(f"Skipped duplicate: {entry.get('title', '')[:50]}")
+                            logger.debug(f"Skipped duplicate: {entry.title[:50]}")
                             continue
 
-                        # Process entry (classification, priority)
-                        processed_entry = processor.process(entry)
+                        # Process entry through pipeline (classification, priority, optional LLM)
+                        try:
+                            processed_entry = pipeline.process(entry)
+                        except BudgetExceededError as e:
+                            # Budget exceeded, continue with keyword-only processing
+                            logger.warning(f"Budget exceeded, using keyword-only processing: {e}")
+                            # Re-process with keyword processor only
+                            processed_entry = keyword_processor.process(entry)
 
                         # Save to Notion
                         if storage.save(processed_entry):
                             stats["created"] += 1
                             deduplicator.mark_as_processed(processed_entry)
                             logger.info(
-                                f"Created: {processed_entry.get('title', '')[:50]} "
-                                f"[{', '.join(processed_entry.get('topics', []))}]"
+                                f"Created: {processed_entry.title[:50]} "
+                                f"[{', '.join(processed_entry.topics)}]"
                             )
                         else:
                             stats["errors"] += 1
@@ -106,7 +144,19 @@ def main() -> Dict[str, int]:
                 continue
 
         # Output statistics
-        logger.info(f"Processing complete: {json.dumps(stats, ensure_ascii=False)}")
+        stats_json = json.dumps(stats, ensure_ascii=False)
+        logger.info(f"Processing complete: {stats_json}")
+
+        # Output cost summary if LLM was enabled
+        if llm_config.get("enabled", False):
+            cost_summary = cost_tracker.get_cost_summary()
+            logger.info(
+                f"LLM Cost Summary: Daily ${cost_summary['daily_cost']:.4f}/{cost_summary['daily_limit']:.2f}, "
+                f"Monthly ${cost_summary['monthly_cost']:.4f}/{cost_summary['monthly_budget']:.2f}"
+            )
+            stats["llm_daily_cost"] = cost_summary["daily_cost"]
+            stats["llm_monthly_cost"] = cost_summary["monthly_cost"]
+
         print(json.dumps(stats, ensure_ascii=False))
 
         return stats

@@ -6,13 +6,41 @@ timezone: Asia/Shanghai
 # Notion integration settings
 notion:
   database_id: ${NOTION_DATABASE_ID}  # From environment variable
+  # Field names in Notion database (must match your database schema)
+  field_names:
+    title: "Title"  # English field name
+    source_type: "Source Type"
+    link: "Link"
+    date: "Date"
+    priority: "Priority"
+    topics: "Topics"
+    status: "Status"
 
 # Content processing settings
 processing:
-  enable_llm: false  # Phase 1: false, Phase 2: optional
+  enable_llm: false  # Phase 1: false, Phase 2: optional (use llm.enabled instead)
   enable_keyword_classification: true  # Phase 1: use keyword-based classification
   deduplication:
     method: url  # url, semantic, both
+
+# LLM settings (Phase 2)
+llm:
+  enabled: false  # Must be explicitly enabled
+  provider: openai  # openai, anthropic, etc.
+  model: gpt-4o-mini  # Model name
+  base_url: null  # Optional: Custom API base URL (for OpenAI-compatible APIs, local models, or proxies)
+  # Examples:
+  # base_url: "https://api.openai.com/v1"  # Default OpenAI
+  # base_url: "http://localhost:1234/v1"  # Local model server (e.g., Ollama, vLLM)
+  # base_url: "https://api.example.com/v1"  # Custom proxy or compatible API
+  daily_limit: 5.0  # USD per day
+  monthly_budget: 50.0  # USD per month
+  features:
+    summarization: true  # Generate LLM summaries
+    translation: true  # Translate content
+    smart_categorization: true  # Use LLM for topic/priority classification
+  translation:
+    target_languages: ["zh", "en"]  # Optional translation targets
 
 # Cache settings
 cache:

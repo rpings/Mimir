@@ -1,49 +1,38 @@
 # -*- coding: utf-8 -*-
-"""Logging utilities."""
+"""Logging utilities using loguru."""
 
-import logging
 import sys
 from pathlib import Path
-from typing import Optional
+
+from loguru import logger
 
 
 def setup_logger(
     name: str,
     log_level: str = "INFO",
-    log_file: Optional[str] = None,
-    log_dir: Optional[str] = None,
-) -> logging.Logger:
-    """Set up and configure logger.
+    log_file: str | None = None,
+    log_dir: str | None = None,
+) -> None:
+    """Set up loguru logger configuration.
 
     Args:
         name: Logger name (typically __name__).
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL).
         log_file: Optional log file name. If None, logs only to console.
         log_dir: Directory for log files. Defaults to 'data/logs'.
-
-    Returns:
-        Configured logger instance.
     """
-    logger = logging.getLogger(name)
-    logger.setLevel(getattr(logging, log_level.upper()))
+    # Remove default handler
+    logger.remove()
 
-    # Avoid adding handlers multiple times
-    if logger.handlers:
-        return logger
-
-    # Create formatter
-    formatter = logging.Formatter(
-        fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
+    # Add console handler
+    logger.add(
+        sys.stdout,
+        format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan> | <level>{message}</level>",
+        level=log_level.upper(),
+        colorize=True,
     )
 
-    # Console handler
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.INFO)
-    console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
-
-    # File handler (if log_file is specified)
+    # Add file handler if specified
     if log_file:
         if log_dir is None:
             log_dir = Path(__file__).parent.parent.parent / "data" / "logs"
@@ -53,22 +42,24 @@ def setup_logger(
         log_dir.mkdir(parents=True, exist_ok=True)
         log_path = log_dir / log_file
 
-        file_handler = logging.FileHandler(log_path, encoding="utf-8")
-        file_handler.setLevel(logging.DEBUG)
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
+        logger.add(
+            log_path,
+            format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {extra[name]} | {message}",
+            level="DEBUG",
+            rotation="10 MB",
+            retention="30 days",
+            encoding="utf-8",
+        )
 
-    return logger
 
-
-def get_logger(name: str) -> logging.Logger:
-    """Get or create a logger instance.
+def get_logger(name: str):
+    """Get loguru logger instance.
 
     Args:
         name: Logger name (typically __name__).
 
     Returns:
-        Logger instance.
+        Loguru logger instance (bound to the name).
     """
-    return logging.getLogger(name)
-
+    # Bind the name to the logger for context
+    return logger.bind(name=name)

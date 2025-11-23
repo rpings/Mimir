@@ -3,9 +3,9 @@
 
 import feedparser
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from src.collectors.base_collector import BaseCollector
+from src.collectors.base_collector import BaseCollector, CollectedEntry
 from src.utils.logger import get_logger
 from src.utils.retry_handler import retry_on_connection_error
 
@@ -15,7 +15,7 @@ class RSSCollector(BaseCollector):
 
     def __init__(
         self,
-        feed_config: Dict[str, str],
+        feed_config: dict[str, str],
         max_entries: int = 30,
     ):
         """Initialize RSS collector.
@@ -24,7 +24,7 @@ class RSSCollector(BaseCollector):
             feed_config: Feed configuration dictionary with:
                 - name: str (feed name)
                 - url: str (feed URL)
-                - source_type: str (e.g., '博客', '论文')
+                - source_type: str (e.g., 'blog', 'paper')
             max_entries: Maximum number of entries to collect per feed.
         """
         self.feed_config = feed_config
@@ -32,7 +32,7 @@ class RSSCollector(BaseCollector):
         self.logger = get_logger(__name__)
 
     @retry_on_connection_error(max_attempts=3)
-    def collect(self) -> List[Dict[str, Any]]:
+    def collect(self) -> list[CollectedEntry]:
         """Collect entries from RSS feed.
 
         Returns:
@@ -75,7 +75,7 @@ class RSSCollector(BaseCollector):
             self.logger.error(f"Failed to collect from RSS feed {url}: {e}")
             raise ValueError(f"Failed to parse RSS feed: {e}") from e
 
-    def _process_entry(self, entry: feedparser.FeedParserDict) -> Optional[Dict[str, Any]]:
+    def _process_entry(self, entry: feedparser.FeedParserDict) -> CollectedEntry | None:
         """Process a single RSS entry.
 
         Args:
@@ -103,14 +103,14 @@ class RSSCollector(BaseCollector):
         elif not published:
             published = datetime.now().isoformat()
 
-        return {
-            "title": title,
-            "link": link,
-            "summary": summary,
-            "published": published,
-            "source_name": self.feed_config.get("name", "Unknown"),
-            "source_type": self.feed_config.get("source_type", "博客"),
-        }
+        return CollectedEntry(
+            title=title,
+            link=link,
+            summary=summary,
+            published=published,
+            source_name=self.feed_config.get("name", "Unknown"),
+            source_type=self.feed_config.get("source_type", "blog"),
+        )
 
     def get_source_name(self) -> str:
         """Get the name of this data source.

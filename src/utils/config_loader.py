@@ -3,7 +3,7 @@
 
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import yaml
 
@@ -11,7 +11,7 @@ import yaml
 class ConfigLoader:
     """Load and manage configuration files."""
 
-    def __init__(self, config_dir: Optional[str] = None):
+    def __init__(self, config_dir: str | None = None):
         """Initialize config loader.
 
         Args:
@@ -20,9 +20,9 @@ class ConfigLoader:
         if config_dir is None:
             config_dir = Path(__file__).parent.parent.parent / "configs"
         self.config_dir = Path(config_dir)
-        self._config_cache: Dict[str, Any] = {}
+        self._config_cache: dict[str, Any] = {}
 
-    def load_yaml(self, filename: str) -> Dict[str, Any]:
+    def load_yaml(self, filename: str) -> dict[str, Any]:
         """Load YAML configuration file.
 
         Args:
@@ -66,7 +66,7 @@ class ConfigLoader:
         pattern = r"\$\{([^}]+)\}"
         return re.sub(pattern, replace_var, content)
 
-    def get_config(self, filename: str = "config.yml") -> Dict[str, Any]:
+    def get_config(self, filename: str = "config.yml") -> dict[str, Any]:
         """Get configuration, with caching.
 
         Args:
@@ -79,7 +79,7 @@ class ConfigLoader:
             self._config_cache[filename] = self.load_yaml(filename)
         return self._config_cache[filename]
 
-    def get_rss_sources(self) -> list[Dict[str, str]]:
+    def get_rss_sources(self) -> list[dict[str, str]]:
         """Get RSS feed sources configuration.
 
         Returns:
@@ -88,7 +88,7 @@ class ConfigLoader:
         sources_config = self.load_yaml("sources/rss.yaml")
         return sources_config.get("feeds", [])
 
-    def get_classification_rules(self) -> Dict[str, Any]:
+    def get_classification_rules(self) -> dict[str, Any]:
         """Get classification rules configuration.
 
         Returns:
@@ -97,7 +97,7 @@ class ConfigLoader:
         return self.load_yaml("sources/rules.yaml")
 
 
-def load_config(config_dir: Optional[str] = None) -> Dict[str, Any]:
+def load_config(config_dir: str | None = None) -> dict[str, Any]:
     """Convenience function to load main configuration.
 
     Args:

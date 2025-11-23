@@ -3,7 +3,6 @@
 
 import re
 from html import unescape
-from typing import Optional
 
 
 def clean_html(html_content: str) -> str:
@@ -30,7 +29,7 @@ def clean_html(html_content: str) -> str:
     return text.strip()
 
 
-def normalize_text(text: Optional[str]) -> str:
+def normalize_text(text: str | None) -> str:
     """Normalize text for comparison and processing.
 
     Args:

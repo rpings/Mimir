@@ -2,9 +2,10 @@
 """Keyword-based classification processor."""
 
 import re
-from typing import Any, Dict, List, Set
+from typing import Any
 
-from src.processors.base_processor import BaseProcessor
+from src.collectors.base_collector import CollectedEntry
+from src.processors.base_processor import BaseProcessor, ProcessedEntry
 from src.processors.content_cleaner import normalize_text
 from src.utils.logger import get_logger
 
@@ -12,35 +13,30 @@ from src.utils.logger import get_logger
 class KeywordProcessor(BaseProcessor):
     """Processes content using keyword-based classification."""
 
-    def __init__(self, rules: Dict[str, Any]):
+    def __init__(self, rules: dict[str, Any]):
         """Initialize keyword processor.
 
         Args:
             rules: Classification rules dictionary with:
-                - topics: Dict[str, List[str]] (topic name -> keyword list)
-                - priority: Dict[str, List[str]] (priority level -> keyword list)
+                - topics: dict[str, list[str]] (topic name -> keyword list)
+                - priority: dict[str, list[str]] (priority level -> keyword list)
         """
         self.rules = rules
         self.topic_rules = rules.get("topics", {})
         self.priority_rules = rules.get("priority", {})
         self.logger = get_logger(__name__)
 
-    def process(self, entry: Dict[str, Any]) -> Dict[str, Any]:
+    def process(self, entry: CollectedEntry) -> ProcessedEntry:
         """Process entry using keyword-based classification.
 
         Args:
-            entry: Raw entry dictionary with:
-                - title: str
-                - summary: str (optional)
-                - link: str
+            entry: CollectedEntry with title, summary, and link.
 
         Returns:
-            Processed entry with additional fields:
-                - topics: List[str]
-                - priority: str (High/Medium/Low)
+            ProcessedEntry with topics and priority assigned.
         """
-        title = entry.get("title", "")
-        summary = entry.get("summary", "")
+        title = entry.title
+        summary = entry.summary or ""
 
         # Classify topics
         topics = self._label_topics(title, summary)
@@ -49,19 +45,21 @@ class KeywordProcessor(BaseProcessor):
         priority = self._guess_priority(title, summary)
 
         # Fallback for arXiv feeds
-        if not topics and "arxiv" in entry.get("link", "").lower():
+        if not topics and "arxiv" in str(entry.link).lower():
             if "retriev" in (title + summary).lower():
                 topics = ["RAG"]
             else:
                 topics = ["Agent"]
 
-        processed_entry = entry.copy()
-        processed_entry["topics"] = topics
-        processed_entry["priority"] = priority
+        # Create ProcessedEntry from CollectedEntry
+        processed = ProcessedEntry.from_collected(entry)
+        processed.topics = topics
+        processed.priority = priority
+        processed.processing_method = "keyword"
 
-        return processed_entry
+        return processed
 
-    def _label_topics(self, title: str, summary: str) -> List[str]:
+    def _label_topics(self, title: str, summary: str) -> list[str]:
         """Label topics based on keyword matching.
 
         Args:
@@ -72,7 +70,7 @@ class KeywordProcessor(BaseProcessor):
             List of matching topic names (sorted, unique).
         """
         text = f" {normalize_text(title)} {normalize_text(summary)} "
-        matched_topics: Set[str] = set()
+        matched_topics: set[str] = set()
 
         for topic, keywords in self.topic_rules.items():
             for keyword in keywords:

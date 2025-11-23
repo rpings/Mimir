@@ -14,7 +14,7 @@ def sample_feed_config():
     return {
         "name": "Test Feed",
         "url": "https://example.com/rss",
-        "source_type": "博客",
+        "source_type": "blog",
     }
 
 
@@ -45,13 +45,16 @@ def test_rss_collector_init(sample_feed_config):
 
 def test_rss_collector_collect_success(sample_feed_config, mock_feedparser):
     """Test successful RSS feed collection."""
+    from src.collectors.base_collector import CollectedEntry
+
     collector = RSSCollector(feed_config=sample_feed_config)
     entries = collector.collect()
 
     assert isinstance(entries, list)
     assert len(entries) > 0
-    assert entries[0]["title"] == "Test Article"
-    assert entries[0]["link"] == "https://example.com/article"
+    assert isinstance(entries[0], CollectedEntry)
+    assert entries[0].title == "Test Article"
+    assert str(entries[0].link) == "https://example.com/article"
 
 
 def test_rss_collector_missing_url():
@@ -112,7 +115,8 @@ def test_rss_collector_entry_without_link(sample_feed_config):
         collector = RSSCollector(feed_config=sample_feed_config)
         entries = collector.collect()
         assert len(entries) == 1
-        assert entries[0]["link"] == "https://example.com"
+        # HttpUrl normalizes URLs, may add trailing slash
+        assert str(entries[0].link).rstrip("/") == "https://example.com"
 
 
 def test_rss_collector_date_parsing(sample_feed_config):
@@ -135,7 +139,7 @@ def test_rss_collector_date_parsing(sample_feed_config):
         collector = RSSCollector(feed_config=sample_feed_config)
         entries = collector.collect()
         assert len(entries) > 0
-        assert "published" in entries[0]
+        assert entries[0].published is not None
 
 
 def test_rss_collector_max_entries(sample_feed_config):
