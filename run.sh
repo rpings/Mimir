@@ -58,31 +58,40 @@ if [ -z "$NOTION_TOKEN" ] || [ -z "$NOTION_DATABASE_ID" ]; then
     echo ""
     echo "Optional (for LLM features):"
     echo "  OPENAI_API_KEY=sk-...          # For OpenAI API"
+    echo "  LLM_MODEL=gpt-4o-mini          # Model name (overrides config)"
     echo "  LLM_BASE_URL=http://...        # For local models or custom APIs"
     echo ""
     echo "You can set them in .env file or export them:"
     echo "  export NOTION_TOKEN=your_token"
     echo "  export NOTION_DATABASE_ID=your_database_id"
     echo "  export OPENAI_API_KEY=sk-...  # Optional"
+    echo "  export LLM_MODEL=gpt-4o-mini  # Optional, overrides config"
     echo "  export LLM_BASE_URL=http://localhost:11434/v1  # Optional"
     echo ""
     echo "Or create a .env file:"
     echo "  NOTION_TOKEN=your_token"
     echo "  NOTION_DATABASE_ID=your_database_id"
     echo "  OPENAI_API_KEY=sk-...  # Optional"
+    echo "  LLM_MODEL=gpt-4o-mini  # Optional, overrides config"
     echo "  LLM_BASE_URL=http://localhost:11434/v1  # Optional"
     exit 1
 fi
 
 # Check optional LLM environment variables
-if [ -n "$OPENAI_API_KEY" ] || [ -n "$LLM_BASE_URL" ]; then
-    echo -e "${GREEN}LLM features detected (API key or base URL set)${NC}"
+if [ -n "$OPENAI_API_KEY" ] || [ -n "$LLM_BASE_URL" ] || [ -n "$LLM_MODEL" ]; then
+    echo -e "${GREEN}LLM features detected${NC}"
+    if [ -n "$LLM_MODEL" ]; then
+        echo "  Model: $LLM_MODEL (from environment variable)"
+    fi
+    if [ -n "$LLM_BASE_URL" ]; then
+        echo "  Base URL: $LLM_BASE_URL (from environment variable)"
+    fi
     echo "  Make sure to enable LLM in configs/config.yml:"
     echo "    llm:"
     echo "      enabled: true"
 else
     echo -e "${YELLOW}LLM features not configured (using keyword processing only)${NC}"
-    echo "  To enable LLM features, set OPENAI_API_KEY or LLM_BASE_URL"
+    echo "  To enable LLM features, set OPENAI_API_KEY, LLM_MODEL, or LLM_BASE_URL"
 fi
 
 # Run Mimir

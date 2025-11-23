@@ -46,9 +46,13 @@ class LLMProcessor(BaseProcessor):
         self.llm_cache = llm_cache
         self.enabled = config.get("enabled", False)
         self.provider = config.get("provider", "openai")
-        self.model = config.get("model", "gpt-4o-mini")
+        
+        # Model support: env var > config > default
+        # Priority: LLM_MODEL env var > config model > default
+        self.model = os.environ.get("LLM_MODEL") or config.get("model", "gpt-4o-mini")
         
         # Base URL support: env var > config > None (use provider default)
+        # Priority: LLM_BASE_URL env var > config base_url > None
         self.base_url = os.environ.get("LLM_BASE_URL") or config.get("base_url")
         if self.base_url == "":
             self.base_url = None

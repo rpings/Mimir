@@ -112,7 +112,9 @@ llm:
 
 Or: `export LLM_BASE_URL="http://localhost:11434/v1"`
 
-**Priority**: `LLM_BASE_URL` env var > config `base_url` > provider default
+**Priority**: 
+- Model: `LLM_MODEL` env var > config `model` > default
+- Base URL: `LLM_BASE_URL` env var > config `base_url` > provider default
 
 ## Development
 
