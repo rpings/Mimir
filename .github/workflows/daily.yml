@@ -24,7 +24,15 @@ jobs:
 
       - name: Run Mimir
         env:
+          # Required secrets for Notion integration
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+          # Optional secrets for LLM features (only needed if LLM is enabled in config)
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+          # Optional secrets for DingTalk notifications (only needed if enabled in config)
+          # DINGTALK_WEBHOOK_URL: ${{ secrets.DINGTALK_WEBHOOK_URL }}
+          # DINGTALK_SECRET: ${{ secrets.DINGTALK_SECRET }}
         run: python main.py
 

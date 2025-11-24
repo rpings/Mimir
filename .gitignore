@@ -35,13 +35,23 @@ ENV/
 
 # Project specific
 data/
+data/logs/
 *.log
+*.log.*
 .env
 .env.local
+.env.*
 .pytest_cache/
 .coverage
 htmlcov/
 *.pyc
+
+# Secrets and sensitive files
+secrets.json
+config.local.yml
+config.local.yaml
+*.secret
+*.key
 
 # OS
 .DS_Store
