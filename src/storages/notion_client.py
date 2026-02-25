@@ -15,6 +15,34 @@ from src.utils.logger import get_logger
 from src.utils.retry_handler import retry_on_connection_error
 
 
+def _normalize_link(link: str) -> str:
+    """Normalize URL for consistent deduplication.
+
+    Strips fragment, trailing slash, and defaults to https scheme so
+    variants of the same URL are treated as one.
+
+    Args:
+        link: Raw URL string.
+
+    Returns:
+        Normalized URL string.
+    """
+    if not link or not link.strip():
+        return ""
+    s = link.strip()
+    if "://" not in s:
+        s = "https://" + s
+    if s.startswith("http://"):
+        s = "https://" + s[7:]
+    # Strip fragment
+    if "#" in s:
+        s = s.split("#", 1)[0]
+    # Strip trailing slash (except for bare "https://")
+    if len(s) > 8 and s.endswith("/"):
+        s = s[:-1]
+    return s
+
+
 class NotionStorage(BaseStorage):
     """Notion database storage implementation."""
 
@@ -38,7 +66,7 @@ class NotionStorage(BaseStorage):
         self.database_id = database_id
         self.timezone = pytz.timezone(timezone)
         self.logger = get_logger(__name__)
-        
+
         # Default English field names (i18n compliant)
         default_fields = {
             "title": "Title",
@@ -50,10 +78,74 @@ class NotionStorage(BaseStorage):
             "status": "Status",
         }
         self.field_names = field_names if field_names else default_fields
+        # Cache of existing links (normalized) for fallback when filter API is unsupported
+        self._existing_links_cache: set[str] | None = None
+        # Data source ID for 2025-09-03 API (query uses data_sources, not databases)
+        self._data_source_id: str | None = None
+
+    def _get_data_source_id(self) -> str | None:
+        """Resolve data source ID from database (API 2025-09-03). Cached."""
+        if self._data_source_id is not None:
+            return self._data_source_id
+        try:
+            resp = self.client.databases.retrieve(self.database_id)
+            sources = resp.get("data_sources") or []
+            if not sources:
+                self.logger.warning("Database has no data_sources (2025 API)")
+                return None
+            self._data_source_id = sources[0].get("id")
+            return self._data_source_id
+        except Exception as e:
+            self.logger.warning(f"Failed to get data_source_id from database: {e}")
+            return None
+
+    def _load_existing_links(self) -> set[str]:
+        """Paginate through database and collect all link URLs (normalized).
+
+        Used when the filter API does not support URL (e.g. url filter invalid).
+        Cached for the process lifetime. Uses data_sources/query (API 2025-09-03).
+
+        Returns:
+            Set of normalized link URLs present in the database.
+        """
+        if self._existing_links_cache is not None:
+            return self._existing_links_cache
+        ds_id = self._get_data_source_id()
+        if not ds_id:
+            return set()
+        link_prop = self.field_names["link"]
+        seen: set[str] = set()
+        cursor: str | None = None
+        try:
+            while True:
+                body: dict[str, Any] = {"page_size": 100}
+                if cursor:
+                    body["start_cursor"] = cursor
+                response = self.client.data_sources.query(ds_id, **body)
+                results = response.get("results", [])
+                for page in results:
+                    props = page.get("properties", {})
+                    link_obj = props.get(link_prop)
+                    if not link_obj:
+                        continue
+                    url = link_obj.get("url")
+                    if url and isinstance(url, str):
+                        seen.add(_normalize_link(url))
+                cursor = response.get("next_cursor")
+                if not cursor:
+                    break
+            self.logger.debug(f"Loaded {len(seen)} existing links from Notion for dedup fallback")
+        except Exception as e:
+            self.logger.warning(f"Failed to load existing links from Notion: {e}")
+        self._existing_links_cache = seen
+        return seen
 
     @retry_on_connection_error(max_attempts=3)
     def exists(self, entry: CollectedEntry | ProcessedEntry) -> bool:
         """Check if entry exists in Notion database.
+
+        Tries rich_text filter first (Notion API does not support "url" filter type).
+        On filter error, falls back to in-memory set of links loaded via pagination.
 
         Args:
             entry: Entry with link field (CollectedEntry or ProcessedEntry).
@@ -65,25 +157,39 @@ class NotionStorage(BaseStorage):
         link = str(entry.link)
         if not link:
             return False
+        normalized = _normalize_link(link)
+        if not normalized:
+            return False
 
+        link_prop = self.field_names["link"]
+        ds_id = self._get_data_source_id()
+        if not ds_id:
+            existing = self._load_existing_links()
+            return normalized in existing
+
+        # Try rich_text filter first (API supports rich_text, not url)
         try:
-            # Format database ID: remove hyphens for URL path (Notion API requirement)
-            db_id = self.database_id.replace("-", "")
-            
-            # Use request method - path should not include /v1/ prefix (added automatically)
-            response = self.client.request(
-                path=f"databases/{db_id}/query",
-                method="POST",
-                body={"filter": {"property": self.field_names["link"], "url": {"equals": link}}},
+            response = self.client.data_sources.query(
+                ds_id,
+                filter={
+                    "property": link_prop,
+                    "rich_text": {"equals": normalized},
+                },
+                page_size=1,
             )
             results = response.get("results", [])
-            exists = len(results) > 0
-            if exists:
+            if len(results) > 0:
                 self.logger.debug(f"Entry exists in Notion: {link[:50]}...")
-            return exists
+                return True
+            return False
         except Exception as e:
-            # Log error but return False to allow retry
-            # Caller should handle this gracefully (e.g., try save and catch duplicate error)
+            error_str = str(e).lower()
+            if "validation" in error_str or "400" in error_str or "invalid" in error_str:
+                self.logger.debug(
+                    "rich_text filter not applicable for Link property, using link-set fallback"
+                )
+                existing = self._load_existing_links()
+                return normalized in existing
             self.logger.warning(f"Failed to query Notion database for existence check: {e}")
             return False
 
@@ -140,8 +246,14 @@ class NotionStorage(BaseStorage):
                     "select": {"name": entry.status}
                 }
 
+            # Defensive check: do not create if entry already exists (by link)
+            if self.exists(entry):
+                self.logger.warning(
+                    f"Entry already exists in Notion (skipping create): {title[:50]}..."
+                )
+                return False
+
             # Create page
-            # Note: Notion API will return error if duplicate, but we check exists() first
             try:
                 self.client.pages.create(
                     parent={"database_id": self.database_id},
@@ -153,7 +265,9 @@ class NotionStorage(BaseStorage):
                 # Check if it's a duplicate error (Notion may return specific error codes)
                 error_str = str(create_error).lower()
                 if "duplicate" in error_str or "already exists" in error_str:
-                    self.logger.warning(f"Entry already exists in Notion (duplicate): {title[:50]}...")
+                    self.logger.warning(
+                        f"Entry already exists in Notion (duplicate): {title[:50]}..."
+                    )
                     return False  # Not saved, but not an error
                 # Re-raise other errors
                 raise
@@ -178,7 +292,9 @@ class NotionStorage(BaseStorage):
             conversion requires parsing Notion page properties.
         """
         try:
-            # Use request method - path should not include /v1/ prefix (added automatically)
+            ds_id = self._get_data_source_id()
+            if not ds_id:
+                return []
             body = {}
             if "filter" in kwargs:
                 body["filter"] = kwargs["filter"]
@@ -188,17 +304,8 @@ class NotionStorage(BaseStorage):
                 body["start_cursor"] = kwargs["start_cursor"]
             if "page_size" in kwargs:
                 body["page_size"] = kwargs["page_size"]
-
-            # Format database ID: remove hyphens for URL path (Notion API requirement)
-            db_id = self.database_id.replace("-", "")
-            
-            response = self.client.request(
-                path=f"databases/{db_id}/query",
-                method="POST",
-                body=body if body else None,
-            )
+            _ = self.client.data_sources.query(ds_id, **body)
             # TODO: Convert Notion results to ProcessedEntry
-            # For now, return empty list as this method is not actively used
             return []
         except Exception as e:
             self.logger.error(f"Failed to query Notion database: {e}")
