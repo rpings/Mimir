@@ -2,90 +2,68 @@
 
 > Drink from the well of knowledge in the AI era.
 
-AI intelligence collection and organization system. Automatically collects, processes, and archives information from RSS, YouTube, and Twitter.
+Mimir is an AI-powered knowledge base that automatically collects, processes, and archives information from ArXiv, GitHub, Hacker News, and Chinese AI news (量子位). Entries are organized into a Notion kanban board with AI-generated summaries, topic classification, and priority ratings.
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Features
-
-- Multi-source collection: RSS feeds, YouTube channels
-- Processing pipeline: content cleaning, quality assessment, deduplication, classification, knowledge extraction
-- Optional LLM enhancement: summarization, translation, categorization
-- Notion integration for archiving
-- Cost control with budget limits
-
 ## Quick Start
-
-### Install
 
 ```bash
 git clone https://github.com/rpings/Mimir.git
 cd Mimir
-pip install -r requirements.txt
+pip install -e .
+cp .env.example .env   # edit with your keys
+mimir setup            # create Notion databases
+mimir collect          # collect and process entries
 ```
 
-### Configure
+## Required Environment Variables
 
-1. Set environment variables:
-   ```bash
-   export NOTION_TOKEN="your_token"
-   export NOTION_DATABASE_ID="your_database_id"
-   # Optional: LLM features
-   export OPENAI_API_KEY="sk-..."
-   ```
+| Variable | Description |
+|----------|-------------|
+| `LLM_API_KEY` | API key for LLM provider (e.g., DeepSeek) |
+| `NOTION_TOKEN` | Notion integration token |
+| `NOTION_ENTRIES_DB_ID` | Database ID for collected entries |
+| `NOTION_PARENT_PAGE_ID` | Parent page for `mimir setup` to create databases under |
 
-2. Edit configuration files:
-   - `configs/sources/rss.yaml` - RSS feeds
-   - `configs/sources/rules.yaml` - Classification rules
-   - `configs/config.yml` - Main config
+## CLI Commands
 
-### Run
+| Command | Description |
+|---------|-------------|
+| `mimir setup` | Create Entries and Reports databases in Notion |
+| `mimir collect [--dry-run]` | Fetch sources, enrich with AI, write to Entries DB |
+| `mimir report [--week WNN]` | Generate weekly report, publish to GitHub Pages, write to Reports DB |
 
-```bash
-python main.py          # Sync mode
-python main_async.py     # Async mode
-```
+### collect
+
+Downloads new content from all sources, deduplicates against existing Notion entries, runs AI enrichment (topic classification, summarization, priority scoring), and writes new entries to the Entries database.
+
+Use `--dry-run` to preview what would be collected without writing anything.
+
+### setup
+
+Creates the required Notion databases (Entries DB and Reports DB) with the correct schema under the specified parent page. Run once after initial configuration.
+
+### report
+
+Generates a weekly HTML report summarizing trends, featured papers, notable projects, and important news. Reports are published to GitHub Pages and linked from the Reports database.
 
 ## Configuration
 
-See `configs/config.yml` for full configuration options.
+See `mimir.toml` for all configuration options. Each option includes inline documentation and the corresponding environment variable override.
 
-Key settings:
-- Processing pipeline processors (cleaning, quality, verification, etc.)
-- LLM settings (optional, requires API key)
-- Notion database configuration
+## Architecture
 
-## LLM Setup (Optional)
+| Layer | Technology |
+|-------|-----------|
+| Sources | ArXiv API, GitHub Trending, Hacker News, 量子位 |
+| AI Processing | DeepSeek (3 prompts: paper, project, news) |
+| Storage | Notion (Entries DB + Reports DB) |
+| Scheduling | GitHub Actions (daily collect, weekly report) |
+| Reports | Jinja2 + HTML → GitHub Pages |
 
-To enable LLM features:
-
-1. Set `OPENAI_API_KEY` environment variable
-2. Enable in `configs/config.yml`:
-   ```yaml
-   llm:
-     enabled: true
-     provider: openai
-     model: gpt-4o-mini
-   ```
-
-For local models, set `base_url` in config or `LLM_BASE_URL` environment variable.
-
-## Development
-
-```bash
-# Setup
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-
-# Test
-pytest tests/
-
-# Code quality
-black src/ tests/
-ruff check src/ tests/
-```
+See the [design docs](https://github.com/rpings/wiki) for detailed architecture and technical decisions.
 
 ## License
 

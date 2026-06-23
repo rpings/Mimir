@@ -1,0 +1,28 @@
+name: Monthly Report
+
+on:
+  schedule:
+    - cron: '0 2 1 * *'       # UTC 02:00 on 1st = CST 10:00
+  workflow_dispatch:
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -e .
+      - run: mimir report --period month
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_ENTRIES_DB_ID: ${{ secrets.NOTION_ENTRIES_DB_ID }}
+          NOTION_REPORTS_DB_ID: ${{ secrets.NOTION_REPORTS_DB_ID }}
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: issues
+          keep_files: true
