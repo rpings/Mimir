@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mimir"
+version = "1.0.0"
+description = "Mimir — personal AI knowledge base with Notion kanban."
+authors = [{name = "Ruiping Wu"}]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.27",
+    "feedparser>=6.0",
+    "beautifulsoup4>=4.12",
+    "litellm>=1.0",
+    "notion-client>=2.2",
+]
+
+[project.urls]
+Homepage = "https://github.com/rpings/Mimir"
+Repository = "https://github.com/rpings/Mimir"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "pytest-cov>=5.0",
+    "pytest-mock>=3.14",
+    "ruff>=0.6",
+]
+
+[project.scripts]
+mimir = "mimir.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["mimir*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/conftest.py" = ["E402"]

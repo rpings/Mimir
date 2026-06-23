@@ -1,0 +1,41 @@
+[llm]
+# LLM provider to use (e.g., deepseek, openai). Env override: LLM_PROVIDER
+provider = "deepseek"
+# Model name for LLM calls. Env override: LLM_MODEL
+model = "deepseek-chat"
+# API base URL. Env override: LLM_BASE_URL
+base_url = "https://api.deepseek.com"
+# API key. Set via env var LLM_API_KEY (not stored in config file)
+
+[sources]
+# arXiv categories to fetch papers from
+arxiv_categories = ["cs.AI", "cs.CL", "cs.LG", "cs.CV"]
+# Maximum number of results from arXiv
+arxiv_max_results = 50
+# Whether to fetch GitHub trending repos
+github_trending = true
+# Maximum number of GitHub repos to fetch
+github_max_repos = 25
+# Whether to fetch Hacker News stories
+hackernews = true
+# Minimum points for Hacker News stories to be included
+hackernews_min_points = 50
+# Whether to fetch news from 量子位 (qbitai)
+qbitai = true
+
+[notion]
+# Notion API token. Set via env var NOTION_TOKEN
+# Database ID for storing collected entries. Env override: NOTION_ENTRIES_DB_ID
+entries_db_id = ""
+# Database ID for storing weekly reports. Env override: NOTION_REPORTS_DB_ID
+reports_db_id = ""
+# Parent page ID for mimir setup to create databases under. Env override: NOTION_PARENT_PAGE_ID
+parent_page_id = ""
+
+[report]
+# Language for reports (zh = Chinese)
+language = "zh"
+# Directory to output generated report files
+issues_dir = "issues"
+# GitHub Pages URL for report links
+site_url = "https://rpings.github.io/Mimir"
