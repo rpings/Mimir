@@ -33,8 +33,8 @@ def generate(cfg: Config, store: NotionStore, *, period: str = "week") -> Path:
     if cfg.notion.reports_db_id:
         site_url = cfg.report.site_url.rstrip("/") if cfg.report.site_url else ""
         link_url = f"{site_url}/{path.name}" if site_url else str(path)
-        _write_record(store, cfg.notion.reports_db_id, label, period, start, link_url, entries)
-        print(f"Reports DB: record created for {label}")
+        action = _write_record(store, cfg.notion.reports_db_id, label, period, start, link_url, entries)
+        print(f"Reports DB: record {action} for {label}")
 
     return path
 
@@ -414,8 +414,32 @@ def _write_record(store, reports_db_id, label, period, start, link_url, entries)
     if hottest:
         props["Hottest"] = {"select": {"name": hottest}}
 
+    # Dedup: update existing record for the same period, or create new
+    existing_id = _find_report(store, reports_db_id, label)
     store._rate_limit()
-    store.client.pages.create(
-        parent={"database_id": reports_db_id},
-        properties=props,
+    if existing_id:
+        store.client.pages.update(existing_id, properties=props)
+        return "updated"
+    else:
+        store.client.pages.create(
+            parent={"database_id": reports_db_id},
+            properties=props,
+        )
+        return "created"
+
+
+def _find_report(store, reports_db_id, label):
+    """Find an existing report page by Name (label). Returns page_id or None."""
+    import requests as _requests
+    store._rate_limit()
+    resp = _requests.post(
+        f"https://api.notion.com/v1/databases/{reports_db_id}/query",
+        headers={
+            "Authorization": f"Bearer {store.client.options.auth}",
+            "Notion-Version": "2022-06-28",
+            "Content-Type": "application/json",
+        },
+        json={"filter": {"property": "Name", "title": {"equals": label}}, "page_size": 1},
     )
+    results = resp.json().get("results", [])
+    return results[0]["id"] if results else None
