@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import time
+from datetime import UTC, datetime
 from typing import Any
 
 from notion_client import Client
@@ -59,6 +60,11 @@ class NotionStore:
         self._ds_id: str | None = None  # data source ID (2025 API)
         self._last_req = 0.0
         self._links: set[str] = set()
+
+    @property
+    def client(self) -> Client:
+        """Public accessor for the Notion API client."""
+        return self._client
 
     def _rate_limit(self) -> None:
         elapsed = time.monotonic() - self._last_req
@@ -133,6 +139,7 @@ class NotionStore:
             "Topic": {"select": {"name": _topic_label(entry.topic)}},
             "Link": {"url": entry.link},
             "Published": {"date": {"start": entry.published.strftime("%Y-%m-%d")}},
+            "Collected": {"date": {"start": datetime.now(UTC).strftime("%Y-%m-%d")}},
             "Status": {"status": {"name": "待读"}},
         }
 
@@ -208,6 +215,7 @@ def _entries_props() -> dict[str, Any]:
         ]}},
         "Link": {"url": {}},
         "Published": {"date": {}},
+        "Collected": {"date": {}},
         "Priority": {"select": {"options": [
             {"name": "★★★", "color": "red"},
             {"name": "★★", "color": "orange"},
@@ -242,6 +250,26 @@ def _entries_props() -> dict[str, Any]:
     }
 
 
+def _reports_props() -> dict[str, Any]:
+    """Return the standard Reports DB properties (report-level only, not entries)."""
+    return {
+        "Name": {"title": {}},
+        "Date": {"date": {}},
+        "Period": {"select": {"options": [
+            {"name": "Weekly", "color": "blue"},
+            {"name": "Monthly", "color": "purple"},
+        ]}},
+        "Link": {"url": {}},
+        "Total": {"number": {"format": "number"}},
+        "Papers": {"number": {"format": "number"}},
+        "Repos": {"number": {"format": "number"}},
+        "News": {"number": {"format": "number"}},
+        "Hottest": {"select": {}},
+        "HighPriority": {"number": {"format": "number"}},
+        "Highlights": {"rich_text": {}},
+    }
+
+
 def repair_database(token: str, database_id: str) -> bool:
     """Ensure a database's data_source has all required properties."""
     import time as _time
@@ -254,6 +282,21 @@ def repair_database(token: str, database_id: str) -> bool:
     ds_id = sources[0]["id"]
     _time.sleep(0.35)
     client.data_sources.update(ds_id, properties=_entries_props())  # type: ignore[arg-type]
+    return True
+
+
+def repair_reports_database(token: str, database_id: str) -> bool:
+    """Fix Reports DB schema — strip entry-level fields, add report-level fields."""
+    import time as _time
+    client = Client(auth=token)
+    _time.sleep(0.35)
+    db = client.databases.retrieve(database_id)
+    sources = db.get("data_sources") or []
+    if not sources:
+        return False
+    ds_id = sources[0]["id"]
+    _time.sleep(0.35)
+    client.data_sources.update(ds_id, properties=_reports_props())  # type: ignore[arg-type]
     return True
 
 
@@ -300,11 +343,7 @@ def setup_reports_database(token: str, parent_page_id: str) -> str:
     import time as _time
 
     client = Client(auth=token)
-    props: dict[str, Any] = {
-        "Date": {"date": {}},
-        "Link": {"url": {}},
-        "Highlights": {"rich_text": {}},
-    }
+    props = _reports_props()
 
     _time.sleep(0.35)
     db = client.databases.create(
