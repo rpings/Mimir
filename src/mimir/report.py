@@ -32,10 +32,9 @@ def generate(cfg: Config, store: NotionStore, *, period: str = "week") -> Path:
 
     if cfg.notion.reports_db_id:
         site_url = cfg.report.site_url.rstrip("/") if cfg.report.site_url else ""
-        link_url = f"{site_url}/{path}" if site_url else str(path)
-        date_name = datetime.now(UTC).strftime("%Y-%m-%d")
-        _write_record(store, cfg.notion.reports_db_id, date_name, start, link_url, entries)
-        print(f"Reports DB: record created for {date_name}")
+        link_url = f"{site_url}/{path.name}" if site_url else str(path)
+        action = _write_record(store, cfg.notion.reports_db_id, label, period, start, link_url, entries)
+        print(f"Reports DB: record {action} for {label}")
 
     return path
 
@@ -241,7 +240,8 @@ def _pick_signals(entries, n):
     seen_topics = set()
     result = []
     high = [e for e in entries if _pr(e, "Priority", "") == "★★★"]
-    rest = [e for e in entries if e not in high]
+    high_ids = {id(e) for e in high}
+    rest = [e for e in entries if id(e) not in high_ids]
     for e in high + rest:
         topic = _pr(e, "Topic", "")
         if topic not in seen_topics or len(result) < 2:
@@ -264,11 +264,6 @@ def _signal_summary(e):
     if sig:
         return sig[:200]
     return _pr(e, "Overview", "")[:200] or _pr(e, "UseCase", "")[:200] or _pr(e, "KeyPoint", "")[:200]
-    """Build signal description from available fields."""
-    sig = _pr(e, "Significance", "")
-    if sig:
-        return f"{_pr(e, 'Overview', '')[:200]}<br><br><b>为什么重要：</b>{sig[:200]}"
-    return _pr(e, "Overview", "")[:300] or _pr(e, "UseCase", "")[:300] or _pr(e, "KeyPoint", "")[:300]
 
 
 def _type_class(e):
@@ -286,17 +281,6 @@ def _type_short(t):
     if "项目" in t:
         return "项目"
     return "新闻"
-
-
-def _dir_icon(name, count, td):
-    """Placeholder direction icons — needs last month data for real comparison."""
-    return "→"
-
-
-def _bar_color(name):
-    """Color-code popular topics."""
-    hot = {"AI Agent": "#e03e3e", "多模态": "#d9730d"}
-    return hot.get(name, "#4664d9")
 
 
 # ═══════════ Shared helpers ═══════════
@@ -351,7 +335,8 @@ def _tl(page):
 
 
 def _resolve_ds_id(store, db_id):
-    resp = store._client.databases.retrieve(db_id)
+    store._rate_limit()
+    resp = store.client.databases.retrieve(db_id)
     sources = resp.get("data_sources") or []
     if not sources:
         raise RuntimeError("Database has no data_sources")
@@ -363,9 +348,14 @@ def _fetch_entries(store, ds_id, since):
     cursor = None
     since_iso = since.isoformat()
     while True:
-        resp = store._client.data_sources.query(ds_id, page_size=100, start_cursor=cursor)
+        store._rate_limit()
+        resp = store.client.data_sources.query(ds_id, page_size=100, start_cursor=cursor)
         for page in resp.get("results", []):
-            if page.get("created_time", "") >= since_iso:
+            pub_date = _pr(page, "Published", "")
+            if pub_date and pub_date >= since_iso[:10]:
+                results.append(page)
+            elif not pub_date and page.get("created_time", "") >= since_iso:
+                # Fallback to created_time if Published is missing
                 results.append(page)
         cursor = resp.get("next_cursor")
         if not cursor:
@@ -373,16 +363,83 @@ def _fetch_entries(store, ds_id, since):
     return results
 
 
-def _write_record(store, reports_db_id, name, start, link_url, entries):
-    papers = [e for e in entries if _tp(e) == "📄 论文"]
-    highlights = ", ".join((_tl(p)[:40] + "...") for p in papers[:3]) if papers else ""
+def _pick_highlights(entries, n: int = 5) -> str:
+    """Pick top entries for the Highlights field, weighted by priority + content richness."""
+    scored = []
+    for e in entries:
+        pri = _pr(e, "Priority", "")
+        score = 3 if pri == "★★★" else 2 if pri == "★★" else 1 if pri == "★" else 0
+        if _pr(e, "Significance", ""):
+            score += 2
+        if _pr(e, "Overview", "") or _pr(e, "KeyPoint", ""):
+            score += 1
+        scored.append((score, e))
+    scored.sort(key=lambda x: -x[0])
+
+    picked = []
+    seen_topics: set[str] = set()
+    for score, e in scored:
+        if len(picked) >= n:
+            break
+        topic = _pr(e, "Topic", "")
+        # Prefer topic diversity, but allow duplicates if score is high enough
+        if topic in seen_topics and score < 4:
+            continue
+        seen_topics.add(topic)
+        emoji = _tp(e)[:2] if _tp(e) else "•"
+        title = _tl(e)[:60]
+        picked.append(f"{emoji} {title}{'...' if len(_tl(e)) > 60 else ''}")
+    return " · ".join(picked) if picked else ""
+
+
+def _write_record(store, reports_db_id, label, period, start, link_url, entries):
+    n = _counts(entries)
+    td = _topic_dist(entries)
+    hottest = td[0][0] if td else ""
+    high_n = sum(1 for e in entries if _pr(e, "Priority", "") == "★★★")
+    highlights = _pick_highlights(entries)
+
+    props: dict[str, Any] = {
+        "Name": {"title": [{"text": {"content": label}}]},
+        "Date": {"date": {"start": start.strftime("%Y-%m-%d")}},
+        "Period": {"select": {"name": "Weekly" if period == "week" else "Monthly"}},
+        "Link": {"url": link_url},
+        "Total": {"number": n[0]},
+        "Papers": {"number": n[1]},
+        "Repos": {"number": n[2]},
+        "News": {"number": n[3]},
+        "HighPriority": {"number": high_n},
+        "Highlights": {"rich_text": [{"text": {"content": highlights[:500]}}]},
+    }
+    if hottest:
+        props["Hottest"] = {"select": {"name": hottest}}
+
+    # Dedup: update existing record for the same period, or create new
+    existing_id = _find_report(store, reports_db_id, label)
     store._rate_limit()
-    store._client.pages.create(
-        parent={"database_id": reports_db_id},
-        properties={
-            "Name": {"title": [{"text": {"content": name}}]},
-            "Date": {"date": {"start": start.strftime("%Y-%m-%d")}},
-            "Link": {"url": link_url},
-            "Highlights": {"rich_text": [{"text": {"content": highlights[:500]}}]},
+    if existing_id:
+        store.client.pages.update(existing_id, properties=props)
+        return "updated"
+    else:
+        store.client.pages.create(
+            parent={"database_id": reports_db_id},
+            properties=props,
+        )
+        return "created"
+
+
+def _find_report(store, reports_db_id, label):
+    """Find an existing report page by Name (label). Returns page_id or None."""
+    import requests as _requests
+    store._rate_limit()
+    resp = _requests.post(
+        f"https://api.notion.com/v1/databases/{reports_db_id}/query",
+        headers={
+            "Authorization": f"Bearer {store.client.options.auth}",
+            "Notion-Version": "2022-06-28",
+            "Content-Type": "application/json",
         },
+        json={"filter": {"property": "Name", "title": {"equals": label}}, "page_size": 1},
     )
+    results = resp.json().get("results", [])
+    return results[0]["id"] if results else None
