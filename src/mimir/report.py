@@ -13,7 +13,11 @@ def _period_start(period: str) -> datetime:
     now = datetime.now(UTC)
     if period == "month":
         return now.replace(day=1)
-    return now - timedelta(days=now.weekday())
+    # Week starts Monday. On Monday, report the previous week.
+    start = now - timedelta(days=now.weekday())
+    if now.weekday() == 0:
+        start -= timedelta(days=7)
+    return start
 
 
 def generate(cfg: Config, store: NotionStore, *, period: str = "week") -> Path:
@@ -73,6 +77,7 @@ def _render_weekly(entries: list[dict], start: datetime) -> str:
         f'<div class="s-title"><a href="{_pr(e,"Link","")}" target="_blank" style="color:inherit;text-decoration:none;">{_tl(e)}</a></div>'
         f'<div class="s-meta">{_pr(e,"Authors","")}{" · "+_pr(e,"Venue","") if _pr(e,"Venue","") else ""} · {_pr(e,"Published","")}'
         f'{" · ⭐"+str(_prn(e,"Stars")) if _prn(e,"Stars") else ""} · <span class="s-tag">{_pr(e,"Topic","")}</span></div>'
+        f'<div class="s-summary">{_signal_summary(e)}</div>'
         f'</div></div>'
         for e in signals
     )
@@ -107,6 +112,7 @@ def _render_weekly(entries: list[dict], start: datetime) -> str:
   .paper{{color:#4664d9}} .repo{{color:#2b8a4e}} .news{{color:#c2780a}}
   .signal .s-title{{font-size:15px;font-weight:600;line-height:1.4}}
   .signal .s-meta{{font-size:11px;color:var(--t3);margin-top:2px}}
+  .signal .s-summary{{font-size:13px;color:var(--t2);margin-top:4px;line-height:1.5}}
   .s-tag{{font-size:10px;padding:1px 5px;border-radius:3px;background:#f1f1ef;color:var(--t2)}}
   .footer{{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);text-align:center;font-size:11px;color:var(--t3);display:flex;justify-content:center;gap:20px}}
 </style></head><body>
