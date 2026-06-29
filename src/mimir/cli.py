@@ -125,6 +125,7 @@ def _cmd_setup(cfg) -> int:
         NotionStore,
         find_database,
         repair_database,
+        repair_reports_database,
         setup_entries_database,
         setup_reports_database,
     )
@@ -188,8 +189,8 @@ def _cmd_setup(cfg) -> int:
     reports_id = cfg.notion.reports_db_id
     if reports_id:
         try:
-            NotionStore(cfg.notion.token, reports_id)._client.databases.retrieve(reports_id)
-            repair_database(cfg.notion.token, reports_id)
+            NotionStore(cfg.notion.token, reports_id).client.databases.retrieve(reports_id)
+            repair_reports_database(cfg.notion.token, reports_id)
             print(f"  Reports DB: {reports_id} — exists (repaired)")
         except Exception:
             print(f"  Reports DB: {reports_id} — NOT FOUND, will create new one")
@@ -229,14 +230,21 @@ def _cmd_setup(cfg) -> int:
     # ── 6. Manual steps (API can't do) ──
     print(f"\n{'='*50}")
     print("Manual steps (do once in Notion UI):")
-    print("  1. Open Entries DB, create 5 views:")
-    print("     Gallery(🔥今日新增) — filter: Created is today, Card preview=Page content")
-    print("     Table(📄论文) — filter: Type = 📄 论文")
-    print("     Table(🛠️项目) — filter: Type = 🛠️ 项目")
-    print("     Table(📰新闻) — filter: Type = 📰 新闻")
-    print("     Board(📋按主题) — group by Topic")
-    print("  2. Grant Notion Integration access to both databases")
-    print("     (Settings → Connections → add your integration)")
+    print()
+    print("  Entries DB — 6 views:")
+    print("    1. Gallery(🔥今日新增) — filter: Collected = Today, Card preview=Page content, sort: Priority desc")
+    print("    2. Table(📄 论文) — filter: Type = 📄 论文, sort: Priority desc")
+    print("    3. Table(🛠️ 项目) — filter: Type = 🛠️ 项目, sort: Stars desc")
+    print("    4. Table(📰 新闻) — filter: Type = 📰 新闻, sort: Priority desc")
+    print("    5. Board(📋 按主题) — group by Topic, sort by Priority")
+    print("    6. Calendar(📅 发布时间) — by Published date")
+    print()
+    print("  Reports DB — 2 views:")
+    print("    1. Gallery(📰 所有报告) — Card preview=Page content")
+    print("    2. Table(📊 按周期) — group by Period")
+    print()
+    print("  Grant Notion Integration access to both databases")
+    print("  (Settings → Connections → add your integration)")
 
     print(f"\n{'='*50}")
     print("Setup complete.")
