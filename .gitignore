@@ -57,3 +57,4 @@ config.local.yaml
 .DS_Store
 Thumbs.db
 
+issues/
