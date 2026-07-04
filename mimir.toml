@@ -9,9 +9,14 @@ base_url = "https://api.deepseek.com"
 
 [sources]
 # arXiv categories to fetch papers from
-arxiv_categories = ["cs.AI", "cs.CL", "cs.LG", "cs.CV"]
-# Maximum number of results from arXiv
-arxiv_max_results = 50
+arxiv_categories = [
+    "cs.AI", "cs.CL", "cs.CV", "cs.LG",
+    "cs.IR", "cs.NE", "cs.MA",
+    "cs.RO", "cs.CR", "cs.SI",
+    "stat.ML",
+]
+# Maximum number of results from arXiv (max 100 per API call)
+arxiv_max_results = 100
 # Whether to fetch GitHub trending repos
 github_trending = true
 # Maximum number of GitHub repos to fetch

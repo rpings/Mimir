@@ -26,8 +26,13 @@ class LLMConfig:
 
 @dataclass
 class SourcesConfig:
-    arxiv_categories: list[str] = field(default_factory=lambda: ["cs.AI", "cs.CL", "cs.LG", "cs.CV"])
-    arxiv_max_results: int = 50
+    arxiv_categories: list[str] = field(default_factory=lambda: [
+        "cs.AI", "cs.CL", "cs.CV", "cs.LG",  # core AI
+        "cs.IR", "cs.NE", "cs.MA",            # IR, neural-evolutionary, multi-agent
+        "cs.RO", "cs.CR", "cs.SI",            # robotics, security, social networks
+        "stat.ML",                             # statistics ML
+    ])
+    arxiv_max_results: int = 100
     github_trending: bool = True
     github_max_repos: int = 25
     hackernews: bool = True
