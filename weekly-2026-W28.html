@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>AI 周报 2026-W28</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+  :root{--text:#1a1a18;--t2:#5f5e5a;--t3:#9b9a97;--line:#e8e8e5;--bg:#fafafa;--card:#fff}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC",sans-serif;background:var(--bg);color:var(--text);line-height:1.5;max-width:680px;margin:0 auto;padding:48px 32px}
+  .header{margin-bottom:32px}
+  .header .mast{font-size:11px;font-weight:600;color:var(--t3);letter-spacing:1.5px}
+  .header h1{font-size:32px;font-weight:700;letter-spacing:-.5px;margin-top:2px}
+  .header .date{font-size:14px;color:var(--t3);margin-top:2px}
+  .kpi{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:32px}
+  .kpi .k{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+  .kpi .k .v{font-size:28px;font-weight:700;letter-spacing:-.5px}
+  .kpi .k .l{font-size:11px;color:var(--t3);margin-top:2px}
+  .chart{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin-bottom:32px}
+  #dist{width:100%;height:160px}
+  .sec{margin-bottom:36px}
+  .sec h2{font-size:18px;font-weight:700;margin-bottom:4px}
+  .signal{display:flex;gap:12px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--line)}
+  .signal:last-child{border-bottom:none}
+  .signal .s-dot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0}
+  .dot-paper{background:#4664d9}
+  .dot-repo{background:#2b8a4e}
+  .dot-news{background:#c2780a}
+  .signal .s-body{flex:1}
+  .signal .s-type{font-size:10px;font-weight:600;margin-bottom:2px}
+  .paper{color:#4664d9} .repo{color:#2b8a4e} .news{color:#c2780a}
+  .signal .s-title{font-size:15px;font-weight:600;line-height:1.4}
+  .signal .s-meta{font-size:11px;color:var(--t3);margin-top:2px}
+  .s-tag{font-size:10px;padding:1px 5px;border-radius:3px;background:#f1f1ef;color:var(--t2)}
+  .footer{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);text-align:center;font-size:11px;color:var(--t3);display:flex;justify-content:center;gap:20px}
+</style></head><body>
+<div class="header">
+  <div class="mast">AI TECHNOLOGY RADAR · WEEKLY</div>
+  <h1>AI 技术周报</h1>
+  <div class="date">2026-W28 · 07/06 — 07/12</div>
+</div>
+<div class="kpi">
+  <div class="k"><div class="v">155</div><div class="l">本周新增</div></div>
+  <div class="k"><div class="v" style="color:#e03e3e;">行业动态</div><div class="l">最热方向 · 45条</div></div>
+  <div class="k"><div class="v">65</div><div class="l">High Priority</div></div>
+</div>
+<div class="chart"><div id="dist" style="width:100%;height:160px;"></div></div>
+<div class="sec"><h2>本周关注</h2><div class="signal"><div class="s-dot dot-news"></div><div class="s-body"><div class="s-type news">新闻</div><div class="s-title"><a href="https://www.qbitai.com/2026/07/446458.html" target="_blank" style="color:inherit;text-decoration:none;">蚂蚁灵波开源LingBot-Video，全球首个面向具身的视频基模来了！</a></div><div class="s-meta"> · 2026-07-09 · <span class="s-tag">开源模型</span></div></div></div><div class="signal"><div class="s-dot dot-news"></div><div class="s-body"><div class="s-type news">新闻</div><div class="s-title"><a href="https://www.qbitai.com/2026/07/446548.html" target="_blank" style="color:inherit;text-decoration:none;">世界模型首次迎来“小时级”生成！蚂蚁灵波开源LingBot-World 2.0，支持AI原生多人交互</a></div><div class="s-meta"> · 2026-07-09 · <span class="s-tag">多模态</span></div></div></div><div class="signal"><div class="s-dot dot-news"></div><div class="s-body"><div class="s-type news">新闻</div><div class="s-title"><a href="https://www.qbitai.com/2026/07/446658.html" target="_blank" style="color:inherit;text-decoration:none;">刚刚，OpenAI首席未来学家离职！曾被马斯克骂蠢驴</a></div><div class="s-meta"> · 2026-07-09 · <span class="s-tag">行业动态</span></div></div></div><div class="signal"><div class="s-dot dot-news"></div><div class="s-body"><div class="s-type news">新闻</div><div class="s-title"><a href="https://arstechnica.com/tech-policy/2026/07/openai-faked-inability-to-search-training-data-hid-billions-of-logs-nyt-says/" target="_blank" style="color:inherit;text-decoration:none;">OpenAI faked inability to search training data, hid billions of logs, NYT says</a></div><div class="s-meta"> · 2026-07-09 · <span class="s-tag">安全与对齐</span></div></div></div><div class="signal"><div class="s-dot dot-repo"></div><div class="s-body"><div class="s-type repo">项目</div><div class="s-title"><a href="https://github.com/langchain-ai/langchain" target="_blank" style="color:inherit;text-decoration:none;">langchain-ai/langchain</a></div><div class="s-meta"> · 2026-07-10 · ⭐712 · <span class="s-tag">AI Agent</span></div></div></div><div class="signal"><div class="s-dot dot-news"></div><div class="s-body"><div class="s-type news">新闻</div><div class="s-title"><a href="https://cognition.com/blog/swe-1-7" target="_blank" style="color:inherit;text-decoration:none;">SWE-1.7 Reach Near GPT 5.5 and Opus Intelligence</a></div><div class="s-meta"> · 2026-07-08 · <span class="s-tag">AI Coding</span></div></div></div><div class="signal"><div class="s-dot dot-repo"></div><div class="s-body"><div class="s-type repo">项目</div><div class="s-title"><a href="https://github.com/SigNoz/signoz" target="_blank" style="color:inherit;text-decoration:none;">SigNoz/signoz</a></div><div class="s-meta"> · 2026-07-09 · ⭐948 · <span class="s-tag">基础设施</span></div></div></div><div class="signal"><div class="s-dot dot-repo"></div><div class="s-body"><div class="s-type repo">项目</div><div class="s-title"><a href="https://github.com/ggml-org/whisper.cpp" target="_blank" style="color:inherit;text-decoration:none;">ggml-org/whisper.cpp</a></div><div class="s-meta"> · 2026-07-09 · ⭐311 · <span class="s-tag">推理优化</span></div></div></div></div>
+<div class="footer">
+  <span>📄 50篇论文</span>
+  <span>🛠️ 21个项目</span>
+  <span>📰 84条新闻</span>
+  <span>周报 · 第 28 期</span>
+</div>
+<script>
+var c=echarts.init(document.getElementById('dist'));
+c.setOption({tooltip:{show:false},grid:{left:60,right:30,top:4,bottom:4},xAxis:{show:false},yAxis:{type:'category',data:['RAG / 检索增强', '推理优化', '开源模型', 'AI Coding', '安全与对齐', '训练与微调', '基础设施', 'AI Agent', '多模态', '行业动态'],axisLabel:{fontSize:10,color:'#9b9a97'},axisLine:{show:false},axisTick:{show:false}},series:[{type:'bar',barWidth:10,itemStyle:{borderRadius:[0,3,3,0]},data:[4, 6, 7, 9, 9, 15, 17, 21, 22, 45],label:{show:true,position:'right',fontSize:10,color:'#5f5e5a',formatter:'{c}'}}]});
+</script></body></html>
