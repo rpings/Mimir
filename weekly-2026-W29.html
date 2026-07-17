@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>AI 周报 2026-W29</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+  :root{--text:#1a1a18;--t2:#5f5e5a;--t3:#9b9a97;--line:#e8e8e5;--bg:#fafafa;--card:#fff}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC",sans-serif;background:var(--bg);color:var(--text);line-height:1.5;max-width:680px;margin:0 auto;padding:48px 32px}
+  .header{margin-bottom:32px}
+  .header .mast{font-size:11px;font-weight:600;color:var(--t3);letter-spacing:1.5px}
+  .header h1{font-size:32px;font-weight:700;letter-spacing:-.5px;margin-top:2px}
+  .header .date{font-size:14px;color:var(--t3);margin-top:2px}
+  .kpi{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:32px}
+  .kpi .k{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+  .kpi .k .v{font-size:28px;font-weight:700;letter-spacing:-.5px}
+  .kpi .k .l{font-size:11px;color:var(--t3);margin-top:2px}
+  .chart{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin-bottom:32px}
+  #dist{width:100%;height:160px}
+  .sec{margin-bottom:36px}
+  .sec h2{font-size:18px;font-weight:700;margin-bottom:4px}
+  .signal{display:flex;gap:12px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--line)}
+  .signal:last-child{border-bottom:none}
+  .signal .s-dot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0}
+  .dot-paper{background:#4664d9}
+  .dot-repo{background:#2b8a4e}
+  .dot-news{background:#c2780a}
+  .signal .s-body{flex:1}
+  .signal .s-type{font-size:10px;font-weight:600;margin-bottom:2px}
+  .paper{color:#4664d9} .repo{color:#2b8a4e} .news{color:#c2780a}
+  .signal .s-title{font-size:15px;font-weight:600;line-height:1.4}
+  .signal .s-meta{font-size:11px;color:var(--t3);margin-top:2px}
+  .s-tag{font-size:10px;padding:1px 5px;border-radius:3px;background:#f1f1ef;color:var(--t2)}
+  .footer{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);text-align:center;font-size:11px;color:var(--t3);display:flex;justify-content:center;gap:20px}
+</style></head><body>
+<div class="header">
+  <div class="mast">AI TECHNOLOGY RADAR · WEEKLY</div>
+  <h1>AI 技术周报</h1>
+  <div class="date">2026-W29 · 07/13 — 07/19</div>
+</div>
+<div class="kpi">
+  <div class="k"><div class="v">93</div><div class="l">本周新增</div></div>
+  <div class="k"><div class="v" style="color:#e03e3e;">行业动态</div><div class="l">最热方向 · 35条</div></div>
+  <div class="k"><div class="v">28</div><div class="l">High Priority</div></div>
+</div>
+<div class="chart"><div id="dist" style="width:100%;height:160px;"></div></div>
+<div class="sec"><h2>本周关注</h2><div class="signal"><div class="s-dot dot-news"></div><div class="s-body"><div class="s-type news">新闻</div><div class="s-title"><a href="https://www.qbitai.com/2026/07/450896.html" target="_blank" style="color:inherit;text-decoration:none;">用世界模型给VLA当教练，原力灵机发布DW0.5，把RL搬进虚拟世界</a></div><div class="s-meta"> · 2026-07-16 · <span class="s-tag">多模态</span></div></div></div><div class="signal"><div class="s-dot dot-news"></div><div class="s-body"><div class="s-type news">新闻</div><div class="s-title"><a href="https://www.qbitai.com/2026/07/450921.html" target="_blank" style="color:inherit;text-decoration:none;">一句「哈哈」引发的苹果OpenAI窃密大战</a></div><div class="s-meta"> · 2026-07-16 · <span class="s-tag">行业动态</span></div></div></div><div class="signal"><div class="s-dot dot-news"></div><div class="s-body"><div class="s-type news">新闻</div><div class="s-title"><a href="https://www.qbitai.com/2026/07/451379.html" target="_blank" style="color:inherit;text-decoration:none;">RLinf v0.3来了！从模型生态到真机部署五大能力跃升，无问芯穹与清华大学联合打造</a></div><div class="s-meta"> · 2026-07-16 · <span class="s-tag">基础设施</span></div></div></div><div class="signal"><div class="s-dot dot-news"></div><div class="s-body"><div class="s-type news">新闻</div><div class="s-title"><a href="https://the-decoder.com/german-ai-consortium-releases-soofi-s-an-open-30b-model-that-tops-benchmarks-in-both-english-and-german/" target="_blank" style="color:inherit;text-decoration:none;">German AI consortium releases Soofi S, an open 30B model that tops benchmarks</a></div><div class="s-meta"> · 2026-07-16 · <span class="s-tag">开源模型</span></div></div></div><div class="signal"><div class="s-dot dot-news"></div><div class="s-body"><div class="s-type news">新闻</div><div class="s-title"><a href="https://www.ayush.digital/blog/the-memory-heist" target="_blank" style="color:inherit;text-decoration:none;">I tricked Claude into leaking your deepest, darkest secrets</a></div><div class="s-meta"> · 2026-07-15 · <span class="s-tag">安全与对齐</span></div></div></div><div class="signal"><div class="s-dot dot-news"></div><div class="s-body"><div class="s-type news">新闻</div><div class="s-title"><a href="https://www.neomindlabs.com/2026/06/08/running-gemma-4-26b-at-5-tokens-sec-on-a-13-year-old-xeon-with-no-gpu/" target="_blank" style="color:inherit;text-decoration:none;">Running Gemma 4 26B at 5 tokens/sec on a 13-year-old Xeon with no GPU</a></div><div class="s-meta"> · 2026-07-15 · <span class="s-tag">推理优化</span></div></div></div><div class="signal"><div class="s-dot dot-news"></div><div class="s-body"><div class="s-type news">新闻</div><div class="s-title"><a href="https://www.qbitai.com/2026/07/448475.html" target="_blank" style="color:inherit;text-decoration:none;">刚刚，一个免费AI Coding选手杀入全球第一梯队</a></div><div class="s-meta"> · 2026-07-14 · <span class="s-tag">AI Coding</span></div></div></div><div class="signal"><div class="s-dot dot-news"></div><div class="s-body"><div class="s-type news">新闻</div><div class="s-title"><a href="https://www.qbitai.com/2026/07/449979.html" target="_blank" style="color:inherit;text-decoration:none;">阶跃入局，重构智能体时代操作系统</a></div><div class="s-meta"> · 2026-07-14 · <span class="s-tag">AI Agent</span></div></div></div></div>
+<div class="footer">
+  <span>📄 0篇论文</span>
+  <span>🛠️ 8个项目</span>
+  <span>📰 85条新闻</span>
+  <span>周报 · 第 29 期</span>
+</div>
+<script>
+var c=echarts.init(document.getElementById('dist'));
+c.setOption({tooltip:{show:false},grid:{left:60,right:30,top:4,bottom:4},xAxis:{show:false},yAxis:{type:'category',data:['RAG / 检索增强', '推理优化', '训练与微调', '多模态', '安全与对齐', '开源模型', 'AI Coding', '基础设施', 'AI Agent', '行业动态'],axisLabel:{fontSize:10,color:'#9b9a97'},axisLine:{show:false},axisTick:{show:false}},series:[{type:'bar',barWidth:10,itemStyle:{borderRadius:[0,3,3,0]},data:[1, 2, 2, 5, 6, 7, 9, 10, 16, 35],label:{show:true,position:'right',fontSize:10,color:'#5f5e5a',formatter:'{c}'}}]});
+</script></body></html>
