@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>AI 周报 2026-W37</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+  :root{--text:#1a1a18;--t2:#5f5e5a;--t3:#9b9a97;--line:#e8e8e5;--bg:#fafafa;--card:#fff}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC",sans-serif;background:var(--bg);color:var(--text);line-height:1.5;max-width:680px;margin:0 auto;padding:48px 32px}
+  .header{margin-bottom:32px}
+  .header .mast{font-size:11px;font-weight:600;color:var(--t3);letter-spacing:1.5px}
+  .header h1{font-size:32px;font-weight:700;letter-spacing:-.5px;margin-top:2px}
+  .header .date{font-size:14px;color:var(--t3);margin-top:2px}
+  .kpi{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:32px}
+  .kpi .k{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+  .kpi .k .v{font-size:28px;font-weight:700;letter-spacing:-.5px}
+  .kpi .k .l{font-size:11px;color:var(--t3);margin-top:2px}
+  .chart{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin-bottom:32px}
+  #dist{width:100%;height:160px}
+  .sec{margin-bottom:36px}
+  .sec h2{font-size:18px;font-weight:700;margin-bottom:4px}
+  .signal{display:flex;gap:12px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--line)}
+  .signal:last-child{border-bottom:none}
+  .signal .s-dot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0}
+  .dot-paper{background:#4664d9}
+  .dot-repo{background:#2b8a4e}
+  .dot-news{background:#c2780a}
+  .signal .s-body{flex:1}
+  .signal .s-type{font-size:10px;font-weight:600;margin-bottom:2px}
+  .paper{color:#4664d9} .repo{color:#2b8a4e} .news{color:#c2780a}
+  .signal .s-title{font-size:15px;font-weight:600;line-height:1.4}
+  .signal .s-meta{font-size:11px;color:var(--t3);margin-top:2px}
+  .s-tag{font-size:10px;padding:1px 5px;border-radius:3px;background:#f1f1ef;color:var(--t2)}
+  .footer{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);text-align:center;font-size:11px;color:var(--t3);display:flex;justify-content:center;gap:20px}
+</style></head><body>
+<div class="header">
+  <div class="mast">AI TECHNOLOGY RADAR · WEEKLY</div>
+  <h1>AI 技术周报</h1>
+  <div class="date">2026-W37 · 09/07 — 09/13</div>
+</div>
+<div class="kpi">
+  <div class="k"><div class="v">99</div><div class="l">本周新增</div></div>
+  <div class="k"><div class="v" style="color:#e03e3e;">行业动态</div><div class="l">最热方向 · 38条</div></div>
+  <div class="k"><div class="v">13</div><div class="l">High Priority</div></div>
+</div>
+<div class="chart"><div id="dist" style="width:100%;height:160px;"></div></div>
+<div class="sec"><h2>本周关注</h2><div class="signal"><div class="s-dot dot-news"></div><div class="s-body"><div class="s-type news">新闻</div><div class="s-title"><a href="https://twitter.com/deepseek_ai/status/2097930608790167907" target="_blank" style="color:inherit;text-decoration:none;">DeepSeek v4.1 Flash</a></div><div class="s-meta"> · 2026-09-10 · <span class="s-tag">开源模型</span></div></div></div><div class="signal"><div class="s-dot dot-news"></div><div class="s-body"><div class="s-type news">新闻</div><div class="s-title"><a href="https://cognition.com/blog/swe-2" target="_blank" style="color:inherit;text-decoration:none;">Cognition launches new SWE-2 model, Rivaling Fable 5.1 and GPT-Astra</a></div><div class="s-meta"> · 2026-09-10 · <span class="s-tag">AI Coding</span></div></div></div><div class="signal"><div class="s-dot dot-repo"></div><div class="s-body"><div class="s-type repo">项目</div><div class="s-title"><a href="https://github.com/huggingface/diffusers" target="_blank" style="color:inherit;text-decoration:none;">huggingface/diffusers</a></div><div class="s-meta"> · 2026-09-11 · ⭐63 · <span class="s-tag">多模态</span></div></div></div><div class="signal"><div class="s-dot dot-news"></div><div class="s-body"><div class="s-type news">新闻</div><div class="s-title"><a href="https://www.qbitai.com/2026/09/486450.html" target="_blank" style="color:inherit;text-decoration:none;">刚刚，苹果首款折叠屏发布！15999元起，AI参与设计</a></div><div class="s-meta"> · 2026-09-09 · <span class="s-tag">行业动态</span></div></div></div><div class="signal"><div class="s-dot dot-news"></div><div class="s-body"><div class="s-type news">新闻</div><div class="s-title"><a href="https://www.qbitai.com/2026/09/486436.html" target="_blank" style="color:inherit;text-decoration:none;">打造10万卡国产算力集群推出JoyAI世界模型，京东发布物理AI建设最新成果</a></div><div class="s-meta"> · 2026-09-10 · <span class="s-tag">基础设施</span></div></div></div><div class="signal"><div class="s-dot dot-news"></div><div class="s-body"><div class="s-type news">新闻</div><div class="s-title"><a href="https://www.qbitai.com/2026/09/485046.html" target="_blank" style="color:inherit;text-decoration:none;">业内首个！“千问办公”推出“多人工作台”</a></div><div class="s-meta"> · 2026-09-07 · <span class="s-tag">AI Agent</span></div></div></div><div class="signal"><div class="s-dot dot-news"></div><div class="s-body"><div class="s-type news">新闻</div><div class="s-title"><a href="https://news.ycombinator.com/item?id=49643556" target="_blank" style="color:inherit;text-decoration:none;">Tell HN: OpenAI keeps re-enabling the 'allow training' setting</a></div><div class="s-meta"> · 2026-09-10 · <span class="s-tag">安全与对齐</span></div></div></div><div class="signal"><div class="s-dot dot-news"></div><div class="s-body"><div class="s-type news">新闻</div><div class="s-title"><a href="https://hugovergnes.github.io/little-lm-3-8b/" target="_blank" style="color:inherit;text-decoration:none;">Training a 3.8B LLM to 0.384 CORE for $998</a></div><div class="s-meta"> · 2026-09-10 · <span class="s-tag">训练与微调</span></div></div></div></div>
+<div class="footer">
+  <span>📄 0篇论文</span>
+  <span>🛠️ 18个项目</span>
+  <span>📰 81条新闻</span>
+  <span>周报 · 第 37 期</span>
+</div>
+<script>
+var c=echarts.init(document.getElementById('dist'));
+c.setOption({tooltip:{show:false},grid:{left:60,right:30,top:4,bottom:4},xAxis:{show:false},yAxis:{type:'category',data:['推理优化', '训练与微调', 'AI Coding', '安全与对齐', '开源模型', 'AI Agent', '多模态', '基础设施', '行业动态'],axisLabel:{fontSize:10,color:'#9b9a97'},axisLine:{show:false},axisTick:{show:false}},series:[{type:'bar',barWidth:10,itemStyle:{borderRadius:[0,3,3,0]},data:[2, 2, 6, 6, 6, 9, 10, 20, 38],label:{show:true,position:'right',fontSize:10,color:'#5f5e5a',formatter:'{c}'}}]});
+</script></body></html>
