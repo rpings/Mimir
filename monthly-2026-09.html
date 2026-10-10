@@ -1,71 +1,125 @@
 <!DOCTYPE html>
-<html lang="zh-CN"><head><meta charset="UTF-8"><title>AI 月报 2026年09月</title>
-<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<html lang="zh-CN">
+<head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2026 年 9 月 · AI 技术月报</title>
 <style>
-  :root{--text:#1a1a18;--t2:#5f5e5a;--t3:#9b9a97;--line:#e8e8e5;--bg:#fafafa;--card:#fff}
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC",sans-serif;background:var(--bg);color:var(--text);line-height:1.5;max-width:680px;margin:0 auto;padding:48px 32px}
-  .header{margin-bottom:36px}
-  .header .mast{font-size:11px;font-weight:600;color:var(--t3);letter-spacing:1.5px}
-  .header h1{font-size:32px;font-weight:700;letter-spacing:-.5px;margin-top:2px}
-  .header .date{font-size:14px;color:var(--t3);margin-top:4px}
-  .kpi{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:36px}
-  .kpi .k{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
-  .kpi .k .v{font-size:28px;font-weight:700;letter-spacing:-.5px}
-  .kpi .k .l{font-size:11px;color:var(--t3);margin-top:2px}
-  .trendline{display:flex;align-items:center;gap:10px;margin-bottom:36px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 20px}
-  .trendline .tl-label{font-size:11px;font-weight:600;color:var(--t3);letter-spacing:.5px;min-width:48px}
-  .trendline .tl-items{display:flex;gap:12px;flex:1;flex-wrap:wrap}
-  .trendline .tl-item{font-size:12px}
-  .tl-hot{color:#e03e3e;font-weight:600}
-  .tl-flat{color:var(--t3)}
-  .chart{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin-bottom:40px}
-  #dist{width:100%;height:200px}
-  .sec{margin-bottom:40px}
-  .sec h2{font-size:18px;font-weight:700;margin-bottom:4px}
-  .sec .sub{font-size:12px;color:var(--t3);margin-bottom:16px}
-  .signal{display:flex;gap:14px;align-items:flex-start;padding:16px 0;border-bottom:1px solid var(--line)}
-  .signal:last-child{border-bottom:none}
-  .signal .s-num{font-size:20px;font-weight:800;color:#e8e8e5;min-width:36px;line-height:1}
-  .signal .s-body{flex:1}
-  .signal .s-title{font-size:15px;font-weight:700;line-height:1.4}
-  .signal .s-meta{font-size:11px;color:var(--t3);margin:2px 0 4px}
-  .signal .s-summary{font-size:13px;color:var(--t2);line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .s-type{display:inline-block;font-size:10px;font-weight:600;padding:1px 6px;border-radius:3px;margin-right:4px}
-  .st-paper{background:#eef2ff;color:#4664d9}
-  .st-repo{background:#eef9f0;color:#2b8a4e}
-  .st-news{background:#fef9ee;color:#c2780a}
-  .s-tag{font-size:10px;padding:1px 6px;border-radius:3px;background:#f1f1ef;color:var(--t2)}
-  a:hover{text-decoration:underline!important}
-  .footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);text-align:center;font-size:11px;color:var(--t3);display:flex;justify-content:center;gap:20px}
-</style></head><body>
-<div class="header">
-  <div class="mast">AI TECHNOLOGY RADAR · MONTHLY</div>
-  <h1>AI 技术月报</h1>
-  <div class="date">2026年09月</div>
-</div>
-<div class="kpi">
-  <div class="k"><div class="v">1</div><div class="l">收录</div></div>
-  <div class="k"><div class="v" style="color:#e03e3e;">基础设施 ↗</div><div class="l">最热方向 · 1条</div></div>
-  <div class="k"><div class="v" style="color:#0f7b6c;">逼近</div><div class="l">开源 vs 闭源</div></div>
-</div>
-<div class="trendline">
-  <div class="tl-label">🧭 趋势</div>
-  <div class="tl-items"><span class="tl-item"><span class="tl-hot">基础设施 ↗</span></span></div>
-</div>
-<div class="sec">
-  <h2>📡 本月关键信号</h2>
-  <div class="sub">5 个最值得关注的发展</div>
-  <div class="signal"><div class="s-num">01</div><div class="s-body"><div class="s-title"><span class="s-type st-repo">项目</span> <a href="https://github.com/quickemu-project/quickemu" target="_blank" style="color:inherit;text-decoration:none;">quickemu-project/quickemu</a></div><div class="s-meta"> · 2026-09-01 · ⭐269 · <span class="s-tag">基础设施</span></div><div class="s-summary">快速创建和运行优化的 Windows、macOS 和 Linux 虚拟机，简化虚拟化环境搭建，适合开发测试、多系统兼容性验证和本地沙箱场景。</div></div></div>
-</div>
-<div class="chart"><div id="dist" style="width:100%;height:200px;"></div></div>
-<div class="footer">
-  <span>📄 0篇论文</span>
-  <span>🛠️ 1个项目</span>
-  <span>📰 0条新闻</span>
-  <span>月刊 · 第 9 期</span>
-</div>
-<script>
-var c=echarts.init(document.getElementById('dist'));
-c.setOption({tooltip:{show:false},grid:{left:60,right:30,top:4,bottom:4},xAxis:{show:false},yAxis:{type:'category',data:['基础设施'],axisLabel:{fontSize:10,color:'#9b9a97'},axisLine:{show:false},axisTick:{show:false}},series:[{type:'bar',barWidth:10,itemStyle:{borderRadius:[0,3,3,0]},data:[1],label:{show:true,position:'right',fontSize:10,color:'#5f5e5a',formatter:'{c}'}}]});
-</script></body></html>
+:root{
+  color-scheme: light;
+  --bg:#fbfbfa; --text:#1a1a18; --t2:#5f5e5a; --t3:#9b9a97;
+  --line:#e9e8e5; --line-soft:#f2f1ee; --track:#f1f0ed;
+  /* 语义色（饱和）—— 只表示涨跌方向 */
+  --up:#c2410c; --flat:#b0aea7; --down:#0f766e;
+  /* 分类色（低饱和）—— 只表示条目类型 */
+  --paper:#5a6ac9; --repo:#4a7d5c; --news:#8a6a3a;
+  --paper-bg:#eef0fb; --repo-bg:#edf5ef; --news-bg:#f7f2e9;
+  /* 间距：只用 4 的倍数，没有例外 */
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px; --s8:64px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#191918; --text:#ecebe8; --t2:#a3a29d; --t3:#75746f;
+    --line:#33322f; --line-soft:#2a2927; --track:#2b2a28;
+    --up:#f08a52; --flat:#5c5b57; --down:#4fb3a5;
+    --paper:#9aa9ff; --repo:#72c893; --news:#d9b478;
+    --paper-bg:#22253c; --repo-bg:#16291d; --news-bg:#2e2716;
+  }
+}
+/* 字阶：6 级，每级一个职责。没有第 7 级，没有半像素。
+   24 刊头月份 · 17 概要 · 16 重点标题 · 13 主题名/说明 · 12 元信息 · 10 标签 */
+*{box-sizing:border-box}
+body{margin:0; background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC","PingFang SC",sans-serif;
+  font-size:13px; line-height:1.6; -webkit-font-smoothing:antialiased}
+.wrap{max-width:680px; margin:0 auto; padding:var(--s8) var(--s5)}
+a{color:inherit; text-decoration:none}
+a:hover .ttl{text-decoration:underline; text-underline-offset:2px}
+
+/* 刊头 —— 框架，不是块。安静，不跟三个块抢 */
+.kicker{font-size:10px; font-weight:700; letter-spacing:.2em; color:var(--t3)}
+h1{margin:var(--s3) 0 0; font-size:24px; font-weight:650; line-height:1.25; letter-spacing:-.01em}
+.meta{margin-top:var(--s2); font-size:12px; color:var(--t3); font-variant-numeric:tabular-nums}
+
+/* 段标签 —— 三个块共用同一套：标签 ——— 右侧注释 */
+.sec{margin:var(--s8) 0 var(--s5); display:flex; align-items:center; gap:var(--s3)}
+.sec h2{margin:0; font-size:10px; font-weight:700; letter-spacing:.16em; color:var(--text);
+  white-space:nowrap}
+.sec i{flex:1; height:1px; background:var(--line)}
+.sec span{font-size:10px; color:var(--t3); white-space:nowrap; font-variant-numeric:tabular-nums}
+
+/* 图表 —— 全页唯一的图。落在页面底色上，不套卡片 */
+.fig{display:grid; align-items:center; gap:0 var(--s3);
+  grid-template-columns:5.4em 1fr 2.9em 2.3em 4.5em 4.5em}
+.fig > .hd, .fig > .row{grid-column:1/-1; display:grid; align-items:center;
+  gap:0 var(--s3); grid-template-columns:5.4em 1fr 2.9em 2.3em 4.5em 4.5em}
+.hd{padding-bottom:var(--s2); border-bottom:1px solid var(--line)}
+.hd span{font-size:10px; letter-spacing:.12em; color:var(--t3)}
+.hd .r{text-align:right}
+.row{padding:var(--s1) 0}
+.nm{font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.trk{height:10px; border-radius:2px; background:var(--track); overflow:hidden; display:block}
+.fl{height:100%; border-radius:2px; display:block; min-width:2px}
+.dv{font-size:13px; font-weight:650; text-align:right; font-variant-numeric:tabular-nums}
+.ct{font-size:12px; color:var(--t3); text-align:right; font-variant-numeric:tabular-nums}
+.row-up .fl{background:var(--up)}   .row-up .dv{color:var(--up)}
+.row-dn .fl{background:var(--down)} .row-dn .dv{color:var(--down)}
+.row-ft .fl{background:var(--flat)} .row-ft .dv{color:var(--t3)}
+.row-ft .nm{color:var(--t2)}
+.pair{display:grid; grid-template-columns:1fr 2em; align-items:center; gap:var(--s2)}
+.pair .trk{height:7px}
+.pair .n{font-size:12px; text-align:right; font-variant-numeric:tabular-nums}
+.pair.pa .fl{background:var(--paper)} .pair.pa .n{color:var(--paper)}
+.pair.pr .fl{background:var(--repo)}  .pair.pr .n{color:var(--repo)}
+.cap{grid-column:1/-1; margin:var(--s4) 0 0; padding-top:var(--s3);
+  border-top:1px solid var(--line-soft); font-size:12px; line-height:1.7; color:var(--t3)}
+
+/* 概要 —— 全页唯一的长文，也是唯一需要被"读"的块 */
+.summary p{margin:0 0 var(--s5); font-size:17px; line-height:1.9; letter-spacing:-.004em}
+.summary p:last-child{margin-bottom:0}
+
+/* 重点 —— 全页唯一能点的块 */
+.events{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:var(--s5)}
+.ev{display:flex; flex-direction:column; gap:var(--s1)}
+.ih{display:flex; align-items:baseline; gap:var(--s2)}
+.chip{flex:none; font-size:10px; font-weight:650; letter-spacing:.05em; line-height:1;
+  padding:var(--s1) var(--s2); border-radius:4px}
+.c-paper{color:var(--paper); background:var(--paper-bg)}
+.c-repo {color:var(--repo);  background:var(--repo-bg)}
+.c-news {color:var(--news);  background:var(--news-bg)}
+.ttl{font-size:16px; font-weight:650; line-height:1.5}
+.why{font-size:13px; line-height:1.75; color:var(--t2)}
+.ev .meta{font-size:12px; color:var(--t3); font-variant-numeric:tabular-nums}
+
+/* 页脚 —— 框架：数据从哪来、有多干净 */
+.foot{margin-top:var(--s8); padding-top:var(--s4); border-top:1px solid var(--line);
+  font-size:12px; color:var(--t3); line-height:1.9; font-variant-numeric:tabular-nums}
+.foot .r{display:flex; flex-wrap:wrap; gap:0 var(--s5)}
+.foot .lk{display:inline-block; margin-top:var(--s3); color:var(--t2);
+  border-bottom:1px solid var(--line)}
+
+/* 移动端只改布局，不改字阶 —— 刻度在断点里也必须是一套 */
+@media (max-width:600px){
+  .fig, .fig > .hd, .fig > .row{
+    grid-template-columns:4.6em 1fr 2.6em 2.1em 3.8em 3.8em; gap:0 var(--s2)}
+}
+@media (max-width:430px){
+  .wrap{padding:var(--s7) var(--s4)}
+  .fig, .fig > .hd, .fig > .row{grid-template-columns:4.2em 1fr 2.4em 3.2em 3.2em; gap:0 var(--s2)}
+  /* 本期列让位；论文/项目 从条形降级为数字对 —— 信息不丢 */
+  .fig .ct, .hd .c4{display:none}
+  /* 数字对对齐右齐的表头，否则两列数字会往左跑 */
+  .pair{display:block; text-align:right}
+  .pair .trk{display:none}
+}
+</style></head>
+<body><div class="wrap">
+<div class="kicker">AI 技术月报</div><h1>2026 年 9 月</h1><div class="meta">09-01 → 09-30 · 按入库时间 · 825 条</div>
+<div class="sec"><h2>图表</h2><i></i><span>较 8 月</span></div>
+<div class="fig"><div class="hd"><span></span><span></span><span class="r">较上月</span><span class="r c4">本期</span><span class="r">论文</span><span class="r c6">项目</span></div><div class="row row-up"><span class="nm" title="安全与对齐">安全</span><span class="trk"><span class="fl" style="width:67%"></span></span><span class="dv">+20</span><span class="ct">76</span><span class="pair pa"><span class="trk"><span class="fl" style="width:33%"></span></span><span class="n">15</span></span><span class="pair pr"><span class="trk"><span class="fl" style="width:11%"></span></span><span class="n">5</span></span></div><div class="row row-up"><span class="nm" title="基础设施">基础设施</span><span class="trk"><span class="fl" style="width:60%"></span></span><span class="dv">+18</span><span class="ct">85</span><span class="pair pa"><span class="trk"><span class="fl" style="width:7%"></span></span><span class="n">3</span></span><span class="pair pr"><span class="trk"><span class="fl" style="width:78%"></span></span><span class="n">35</span></span></div><div class="row row-up"><span class="nm" title="推理优化">推理</span><span class="trk"><span class="fl" style="width:47%"></span></span><span class="dv">+14</span><span class="ct">43</span><span class="pair pa"><span class="trk"><span class="fl" style="width:36%"></span></span><span class="n">16</span></span><span class="pair pr"><span class="trk"><span class="fl" style="width:2%"></span></span><span class="n">1</span></span></div><div class="row row-ft"><span class="nm" title="AI Coding">AI Coding</span><span class="trk"><span class="fl" style="width:3%"></span></span><span class="dv">+1</span><span class="ct">52</span><span class="pair pa"><span class="trk"><span class="fl" style="width:11%"></span></span><span class="n">5</span></span><span class="pair pr"><span class="trk"><span class="fl" style="width:9%"></span></span><span class="n">4</span></span></div><div class="row row-ft"><span class="nm" title="RAG / 检索增强">RAG</span><span class="trk"><span class="fl" style="width:7%"></span></span><span class="dv">-2</span><span class="ct">13</span><span class="pair pa"><span class="trk"><span class="fl" style="width:22%"></span></span><span class="n">10</span></span><span class="pair pr"><span class="trk"><span class="fl" style="width:2%"></span></span><span class="n">1</span></span></div><div class="row row-ft"><span class="nm" title="AI Agent">Agent</span><span class="trk"><span class="fl" style="width:27%"></span></span><span class="dv">-8</span><span class="ct">96</span><span class="pair pa"><span class="trk"><span class="fl" style="width:51%"></span></span><span class="n">23</span></span><span class="pair pr"><span class="trk"><span class="fl" style="width:4%"></span></span><span class="n">2</span></span></div><div class="row row-ft"><span class="nm" title="开源模型">开源</span><span class="trk"><span class="fl" style="width:37%"></span></span><span class="dv">-11</span><span class="ct">57</span><span class="pair pa"><span class="trk"><span class="fl" style="width:2%"></span></span><span class="n">1</span></span><span class="pair pr"><span class="trk"></span><span class="n">0</span></span></div><div class="row row-dn"><span class="nm" title="训练与微调">训练</span><span class="trk"><span class="fl" style="width:47%"></span></span><span class="dv">-14</span><span class="ct">52</span><span class="pair pa"><span class="trk"><span class="fl" style="width:69%"></span></span><span class="n">31</span></span><span class="pair pr"><span class="trk"><span class="fl" style="width:2%"></span></span><span class="n">1</span></span></div><div class="row row-dn"><span class="nm" title="多模态">多模态</span><span class="trk"><span class="fl" style="width:100%"></span></span><span class="dv">-30</span><span class="ct">74</span><span class="pair pa"><span class="trk"><span class="fl" style="width:100%"></span></span><span class="n">45</span></span><span class="pair pr"><span class="trk"><span class="fl" style="width:2%"></span></span><span class="n">1</span></span></div><p class="cap">条形 = 较上月的增减条数，从上到下从 +20 读到 -30。橙 = 涨 20% 以上且至少 +3 条，青 = 跌同幅度，灰 = 未过阈值。论文 / 项目共用一条比例尺：左长右短即「研究跑在工程前面」。</p></div>
+<div class="sec"><h2>概要</h2><i></i></div>
+<div class="summary"><p>本月的主线是能力扩张与落地成本之间的拉扯：模型迭代继续加速，但支撑它的基础设施投入开始被公开质疑。与此同时，安全与对齐、基础设施、推理优化三条线同时升温，说明行业重心正从「能不能做出来」转向「做出来之后怎么撑住」。</p><p>值得警惕的是，训练与微调、多模态的收录量在回落，而推理优化在上升，这更像是资源向部署端倾斜，而不是研究面整体收缩。OpenAI 一边高频发版、一边因模型过强而叫停发布，说明能力评估与发布节奏之间还没有稳定的规则，这类不确定性会直接传导到依赖其接口的产品侧。</p></div>
+<div class="sec"><h2>重点</h2><i></i><span>按重要性排序</span></div>
+<ul class="events"><li class="ev"><div class="ih"><span class="chip c-news">新闻</span><a href="https://www.thenationalnews.com/future/technology/2026/09/29/ai-industry-needs-to-earn-6-trillion-by-2031-to-justify-data-centres/" target="_blank" rel="noopener" class="ttl">AI needs $6T in annual revenue to justify data centre boom</a></div><div class="why">把基础设施投资的可持续性问题摆上台面，是本月最直接的降温信号。</div><div class="meta">Hacker News · 09-30 · Unverified</div></li><li class="ev"><div class="ih"><span class="chip c-news">新闻</span><a href="https://www.qbitai.com/2026/09/499246.html" target="_blank" rel="noopener" class="ttl">OpenAI光速上新GPT-6.1 Sol！一晚上25项更新，都在这里了</a></div><div class="why">单场发布会密集更新，反映头部厂商产品节奏已压到以周计。</div><div class="meta">量子位 · 09-30 · Unverified</div></li><li class="ev"><div class="ih"><span class="chip c-news">新闻</span><a href="https://www.qbitai.com/2026/09/499140.html" target="_blank" rel="noopener" class="ttl">OpenAI因新模型太强叫停发布</a></div><div class="why">因能力过强而暂停发布，暴露能力评估与发布决策之间缺乏既定规则。</div><div class="meta">量子位 · 09-30 · Unverified</div></li><li class="ev"><div class="ih"><span class="chip c-paper">论文</span><a href="https://arxiv.org/abs/2609.30205v1" target="_blank" rel="noopener" class="ttl">A Living Benchmark for Information Retrieval from Electronic Health Records</a></div><div class="why">为临床场景提供动态评估基准，直接关系到医疗AI能否安全落地。</div><div class="meta">Emily Alsentzer · arXiv · 09-26</div></li><li class="ev"><div class="ih"><span class="chip c-paper">论文</span><a href="https://arxiv.org/abs/2609.30264v1" target="_blank" rel="noopener" class="ttl">AD-WM: Action-Discriminative World Models for Counterfactual Model Predictive Control</a></div><div class="why">指出世界模型在反事实规划中的缺陷，影响机器人、自动驾驶等控制场景。</div><div class="meta">Yang Gao · arXiv · 09-26</div></li><li class="ev"><div class="ih"><span class="chip c-paper">论文</span><a href="https://arxiv.org/abs/2609.30096v1" target="_blank" rel="noopener" class="ttl">Accelerating Video Diffusion via Training-Free Trajectory Routing</a></div><div class="why">免训练加速视频扩散推理，降低视频生成的实际部署成本。</div><div class="meta">Nima Tajbakhsh · arXiv · 09-26</div></li></ul>
+<div class="foot"><div class="r"><span>150 论文</span><span>67 项目</span><span>608 新闻</span><span>其中 277 条未归入主题（34%）</span></div><a class="lk" href="https://www.notion.so/3ce9a61b728381adb003c44945702d06" target="_blank" rel="noopener">Notion 完整数据 →</a></div>
+</div></body></html>
