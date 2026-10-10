@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from datetime import UTC, datetime
 
 import httpx
@@ -50,15 +51,16 @@ def _parse(html: str, limit: int) -> list[RawEntry]:
         link = f"https://github.com{href}"
         desc_el = article.select_one("p")
         description = desc_el.get_text(strip=True) if desc_el else ""
-        # Extract star count
+        # Total stars, from the stargazers link. The row's right-hand span reads
+        # "N stars this week", which is a weekly gain — storing that under a field
+        # every reader takes for a total made the reports claim e.g. 2.7k stars
+        # for a repo with 400k.
         stars = 0
-        star_el = article.select_one("span.d-inline-block.float-sm-right")
-        if star_el:
-            star_text = star_el.get_text(strip=True)
-            import re
-            m = re.search(r'([\d,]+)\s*stars?', star_text)
+        stars_el = article.select_one('a[href$="/stargazers"]')
+        if stars_el:
+            m = re.search(r"([\d,]+)", stars_el.get_text(strip=True))
             if m:
-                stars = int(m.group(1).replace(',', ''))
+                stars = int(m.group(1).replace(",", ""))
         entries.append(RawEntry(
             title=full_name,
             link=link,
