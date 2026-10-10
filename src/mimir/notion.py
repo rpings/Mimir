@@ -6,6 +6,7 @@ import logging
 import time
 from datetime import UTC, datetime
 from typing import Any
+from urllib.parse import urlparse
 
 from notion_client import Client
 
@@ -34,6 +35,63 @@ def _verification_label(v: str) -> str:
 def _priority_label(p: str) -> str:
     mapping = {"high": "★★★", "medium": "★★", "low": "★"}
     return mapping.get(p, "★★")
+
+
+#: Collector source values → display labels. Recorded explicitly because the
+#: link cannot stand in for it: Hacker News stores the external article URL.
+SOURCE_LABELS: dict[str, str] = {
+    "github_trending": "GitHub",
+    "hackernews": "Hacker News",
+    "qbitai": "量子位",
+}
+SOURCE_OTHER = "其他"
+
+
+def _source_label(source: str) -> str:
+    if source in SOURCE_LABELS:
+        return SOURCE_LABELS[source]
+    if source.startswith("arxiv"):
+        return "arXiv"
+    return SOURCE_OTHER
+
+
+def _host_is(host: str, domain: str) -> bool:
+    """True for ``domain`` itself and its subdomains, and for nothing else.
+
+    A bare ``str.endswith`` would also accept ``evilgithub.com`` and
+    ``notarxiv.org``, and whatever this returns is written to the database.
+    """
+    return host == domain or host.endswith("." + domain)
+
+
+def infer_source(type_label: str, link: str) -> str:
+    """Best-effort collector for entries collected before ``Source`` existed.
+
+    Historical rows do not record which collector produced them, so this
+    reconstructs it from what they do carry. A 论文/项目 row is decisive: only
+    the arXiv and GitHub collectors emit those types, and each links only to its
+    own host. Everything else lands on Hacker News, which is the only collector
+    whose links point somewhere other than its own site.
+
+    The one case this cannot settle is a *news* row linking to qbitai.com: the
+    量子位 collector produces those natively, but the HN collector stores the
+    external article URL, so an HN submission of a 量子位 story looks identical.
+    量子位 is reported because it is by far the likelier producer. Callers that
+    need certainty should treat this as the guess it is — see the note in
+    ``_source_of``.
+    """
+    host = urlparse(link).netloc.lower().removeprefix("www.") if link else ""
+    typed = "论文" in type_label or "项目" in type_label
+    if typed:
+        if _host_is(host, "arxiv.org"):
+            return "arXiv"
+        if _host_is(host, "github.com"):
+            return "GitHub"
+        return SOURCE_OTHER
+
+    if _host_is(host, "qbitai.com"):
+        return "量子位"
+    return "Hacker News" if link else SOURCE_OTHER
 
 
 def _topic_label(topic_id: str) -> str:
@@ -137,6 +195,7 @@ class NotionStore:
             "Name": {"title": [{"text": {"content": entry.title[:200]}}]},
             "Type": {"select": {"name": TYPE_LABELS.get(entry.entry_type, "📰 新闻")}},
             "Topic": {"select": {"name": _topic_label(entry.topic)}},
+            "Source": {"select": {"name": _source_label(entry.source)}},
             "Link": {"url": entry.link},
             "Published": {"date": {"start": entry.published.strftime("%Y-%m-%d")}},
             "Collected": {"date": {"start": datetime.now(UTC).strftime("%Y-%m-%d")}},
@@ -213,6 +272,13 @@ def _entries_props() -> dict[str, Any]:
             {"name": "开源模型", "color": "blue"},
             {"name": "行业动态", "color": "yellow"},
         ]}},
+        "Source": {"select": {"options": [
+            {"name": "arXiv", "color": "blue"},
+            {"name": "GitHub", "color": "green"},
+            {"name": "Hacker News", "color": "orange"},
+            {"name": "量子位", "color": "purple"},
+            {"name": "其他", "color": "gray"},
+        ]}},
         "Link": {"url": {}},
         "Published": {"date": {}},
         "Collected": {"date": {}},
@@ -255,6 +321,8 @@ def _reports_props() -> dict[str, Any]:
     return {
         "Name": {"title": {}},
         "Date": {"date": {}},
+        # "Weekly" is only ever read now: it labels the records written before
+        # the weekly report was dropped, and dropping the option would orphan them.
         "Period": {"select": {"options": [
             {"name": "Weekly", "color": "blue"},
             {"name": "Monthly", "color": "purple"},

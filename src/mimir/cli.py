@@ -7,6 +7,7 @@ import asyncio
 import logging
 import sys
 import time
+from datetime import date
 
 import httpx
 
@@ -125,6 +126,7 @@ def _cmd_setup(cfg) -> int:
         NotionStore,
         find_database,
         repair_database,
+        repair_reports_database,
         setup_entries_database,
         setup_reports_database,
     )
@@ -188,8 +190,8 @@ def _cmd_setup(cfg) -> int:
     reports_id = cfg.notion.reports_db_id
     if reports_id:
         try:
-            NotionStore(cfg.notion.token, reports_id)._client.databases.retrieve(reports_id)
-            repair_database(cfg.notion.token, reports_id)
+            NotionStore(cfg.notion.token, reports_id).client.databases.retrieve(reports_id)
+            repair_reports_database(cfg.notion.token, reports_id)
             print(f"  Reports DB: {reports_id} — exists (repaired)")
         except Exception:
             print(f"  Reports DB: {reports_id} — NOT FOUND, will create new one")
@@ -229,27 +231,39 @@ def _cmd_setup(cfg) -> int:
     # ── 6. Manual steps (API can't do) ──
     print(f"\n{'='*50}")
     print("Manual steps (do once in Notion UI):")
-    print("  1. Open Entries DB, create 5 views:")
-    print("     Gallery(🔥今日新增) — filter: Created is today, Card preview=Page content")
-    print("     Table(📄论文) — filter: Type = 📄 论文")
-    print("     Table(🛠️项目) — filter: Type = 🛠️ 项目")
-    print("     Table(📰新闻) — filter: Type = 📰 新闻")
-    print("     Board(📋按主题) — group by Topic")
-    print("  2. Grant Notion Integration access to both databases")
-    print("     (Settings → Connections → add your integration)")
+    print()
+    print("  Entries DB — 6 views:")
+    print("    1. Gallery(🔥今日新增) — filter: Collected = Today, Card preview=Page content, sort: Priority desc")
+    print("    2. Table(📄 论文) — filter: Type = 📄 论文, sort: Priority desc")
+    print("    3. Table(🛠️ 项目) — filter: Type = 🛠️ 项目, sort: Stars desc")
+    print("    4. Table(📰 新闻) — filter: Type = 📰 新闻, sort: Priority desc")
+    print("    5. Board(📋 按主题) — group by Topic, sort by Priority")
+    print("    6. Calendar(📅 发布时间) — by Published date")
+    print()
+    print("  Reports DB — 1 view:")
+    print("    1. Gallery(📰 所有报告) — Card preview=Page content")
+    print()
+    print("  Grant Notion Integration access to both databases")
+    print("  (Settings → Connections → add your integration)")
 
     print(f"\n{'='*50}")
     print("Setup complete.")
     return 0
 
 
-def _cmd_report(cfg, period: str = "week") -> int:
-    """Generate weekly or monthly report from Notion entries."""
+#: A report covers one month and compares it against the one before, so the
+#: anchor year has to leave room for a month on either side. Outside this the
+#: ``date`` arithmetic raises rather than returning a window.
+_MIN_ANCHOR_YEAR, _MAX_ANCHOR_YEAR = 2, 9998
+
+
+def _cmd_report(cfg, anchor=None) -> int:
+    """Generate the monthly report from Notion entries."""
     from mimir.notion import NotionStore
     from mimir.report import generate
 
     client = NotionStore(cfg.notion.token, cfg.notion.entries_db_id)
-    path = generate(cfg, client, period=period)
+    path = generate(cfg, client, anchor=anchor)
     print(f"Report: {path}")
     return 0
 
@@ -265,9 +279,10 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("collect", help="collect sources → AI process → write Notion")
     p.add_argument("--dry-run", action="store_true", help="print what would be done, do not write")
-    p_report = sub.add_parser("report", help="generate weekly or monthly HTML report")
-    p_report.add_argument("--period", choices=["week", "month"], default="week",
-                          help="report period (default: week)")
+    p_report = sub.add_parser("report", help="generate the monthly HTML report")
+    p_report.add_argument("--date", metavar="YYYY-MM-DD", default=None,
+                          help="backfill: report the full month containing this date "
+                               "(default: the most recently completed month)")
     sub.add_parser("setup", help="verify config and Notion connectivity")
 
     args = parser.parse_args(argv)
@@ -282,7 +297,22 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "collect":
         return asyncio.run(_cmd_collect(cfg, dry_run=args.dry_run))
     elif args.cmd == "report":
-        return _cmd_report(cfg, period=args.period)
+        anchor = None
+        if args.date:
+            try:
+                anchor = date.fromisoformat(args.date)
+            except ValueError:
+                print(f"Invalid --date {args.date!r}: expected YYYY-MM-DD", file=sys.stderr)
+                return 1
+            if not _MIN_ANCHOR_YEAR <= anchor.year <= _MAX_ANCHOR_YEAR:
+                print(
+                    f"--date {args.date} is outside the supported range: a report "
+                    f"needs the month on either side of its own, so the year must be "
+                    f"{_MIN_ANCHOR_YEAR}–{_MAX_ANCHOR_YEAR}",
+                    file=sys.stderr,
+                )
+                return 1
+        return _cmd_report(cfg, anchor=anchor)
     elif args.cmd == "setup":
         return _cmd_setup(cfg)
 

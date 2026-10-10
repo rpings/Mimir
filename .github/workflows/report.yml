@@ -1,9 +1,15 @@
-name: Weekly Report
+name: Monthly Report
 
 on:
   schedule:
-    - cron: '0 1 * * 5'       # UTC 01:00 Friday = CST 09:00 Friday
+    # The 1st, so the window is the calendar month that just ended.
+    - cron: '0 2 1 * *'       # UTC 02:00 on 1st = CST 10:00
   workflow_dispatch:
+    inputs:
+      date:
+        description: 'Backfill: report the month containing this date (YYYY-MM-DD)'
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -16,7 +22,7 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install -e .
-      - run: mimir report
+      - run: mimir report ${{ inputs.date && format('--date {0}', inputs.date) || '' }}
         env:
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
