@@ -33,7 +33,7 @@ mimir collect          # collect and process entries
 |---------|-------------|
 | `mimir setup` | Create Entries and Reports databases in Notion |
 | `mimir collect [--dry-run]` | Fetch sources, enrich with AI, write to Entries DB |
-| `mimir report [--week WNN]` | Generate weekly report, publish to GitHub Pages, write to Reports DB |
+| `mimir report [--date YYYY-MM-DD]` | Generate the monthly report, publish to GitHub Pages, write to Reports DB |
 
 ### collect
 
@@ -47,7 +47,9 @@ Creates the required Notion databases (Entries DB and Reports DB) with the corre
 
 ### report
 
-Generates a weekly HTML report summarizing trends, featured papers, notable projects, and important news. Reports are published to GitHub Pages and linked from the Reports database.
+Generates a monthly HTML report summarizing trends, featured papers, notable projects, and important news. Reports are published to GitHub Pages and linked from the Reports database.
+
+By default it covers the most recently *completed* calendar month, so a run on the 1st never reports a month that is still filling up. Use `--date YYYY-MM-DD` to backfill: it reports the whole month containing that date.
 
 ## Configuration
 
@@ -60,7 +62,7 @@ See `mimir.toml` for all configuration options. Each option includes inline docu
 | Sources | ArXiv API, GitHub Trending, Hacker News, 量子位 |
 | AI Processing | DeepSeek (3 prompts: paper, project, news) |
 | Storage | Notion (Entries DB + Reports DB) |
-| Scheduling | GitHub Actions (daily collect, weekly report) |
+| Scheduling | GitHub Actions (daily collect, monthly report) |
 | Reports | Jinja2 + HTML → GitHub Pages |
 
 See the [design docs](https://github.com/rpings/wiki) for detailed architecture and technical decisions.
