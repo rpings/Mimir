@@ -86,7 +86,9 @@ def _valid_verification(v: Any) -> str:
 def _entry_body(entry: RawEntry) -> str:
     parts = [f"Title: {entry.title}"]
     if entry.summary:
-        parts.append(f"Summary: {entry.summary[:800]}")
+        # arXiv abstracts run to ~1,500 chars; 800 cut off the results, which
+        # the prompt asks the model to cite.
+        parts.append(f"Summary: {entry.summary[:2000]}")
     return "\n".join(parts)
 
 
